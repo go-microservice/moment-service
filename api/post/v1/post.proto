@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package api.post.v1;
+
+option go_package = "github.com/go-microservice/moment-service/api/post/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.post.v1";
+
+service PostService {
+	rpc CreatePost (CreatePostRequest) returns (CreatePostReply);
+	rpc UpdatePost (UpdatePostRequest) returns (UpdatePostReply);
+	rpc DeletePost (DeletePostRequest) returns (DeletePostReply);
+	rpc GetPost (GetPostRequest) returns (GetPostReply);
+	rpc ListPost (ListPostRequest) returns (ListPostReply);
+}
+
+message Post {
+	int64 id = 1;
+	int32 post_type = 2;
+	int64 user_id = 3;
+	string title = 4;
+	string content = 5;
+	int64 view_count = 6;
+	int64 like_count = 7;
+	int64 comment_count = 8;
+	int64 collect_count = 9;
+	int64 share_count = 10;
+	int32 del_flag = 11;
+	int32 visible = 12;
+	float longitude = 13;
+	float latitude = 14;
+	float position = 15;
+	int64 created_at = 16;
+	int64 updated_at = 17;
+	int64 deleted_at = 18;
+}
+
+message CreatePostRequest {
+	int64 user_id = 1;
+	string title = 2;
+	string text = 3;
+	string pic_keys = 4;
+	string video_key = 5;
+	string video_duration = 6;
+	string video_cover_key = 7;
+	string video_width = 8;
+	string video_height = 9;
+	float longitude = 10;
+	float latitude = 11;
+	string position = 12;
+}
+message CreatePostReply {
+	Post post = 1;
+}
+
+message UpdatePostRequest {
+}
+message UpdatePostReply {}
+
+message DeletePostRequest {
+	int64 id = 1;
+	int32 del_flag = 2;
+}
+message DeletePostReply {
+}
+
+message GetPostRequest {
+	int64 id = 1;
+}
+message GetPostReply {
+	Post post = 1;
+}
+
+message ListPostRequest {
+	int64 last_id = 1;
+	int32 limit = 2;
+}
+message ListPostReply {
+	Post items = 1;
+	bool has_more = 2;
+	int64 last_id = 3;
+}
