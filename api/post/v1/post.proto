@@ -1,17 +1,23 @@
 syntax = "proto3";
 
-package api.post.v1;
+package post.v1;
 
 option go_package = "github.com/go-microservice/moment-service/api/post/v1;v1";
 option java_multiple_files = true;
-option java_package = "api.post.v1";
+option java_package = "post.v1";
 
 service PostService {
 	rpc CreatePost (CreatePostRequest) returns (CreatePostReply);
 	rpc UpdatePost (UpdatePostRequest) returns (UpdatePostReply);
 	rpc DeletePost (DeletePostRequest) returns (DeletePostReply);
 	rpc GetPost (GetPostRequest) returns (GetPostReply);
-	rpc ListPost (ListPostRequest) returns (ListPostReply);
+	rpc BatchGetPost (BatchGetPostRequest) returns (BatchGetPostReply);
+	// 我发布过的帖子列表
+	rpc ListMyPost (ListMyPostRequest) returns (ListMyPostReply);
+	// 最新的帖子列表
+	rpc ListLatestPost (ListLatestPostRequest) returns (ListLatestPostReply);
+	// 热门的帖子列表
+	rpc ListHotPost (ListHotPostRequest) returns (ListHotPostReply);
 }
 
 message Post {
@@ -42,9 +48,9 @@ message CreatePostRequest {
 	string pic_keys = 4;
 	string video_key = 5;
 	string video_duration = 6;
-	string video_cover_key = 7;
-	string video_width = 8;
-	string video_height = 9;
+	string cover_key = 7;
+	string cover_width = 8;
+	string cover_height = 9;
 	float longitude = 10;
 	float latitude = 11;
 	string position = 12;
@@ -59,7 +65,8 @@ message UpdatePostReply {}
 
 message DeletePostRequest {
 	int64 id = 1;
-	int32 del_flag = 2;
+	int64 user_id = 2;
+	int32 del_flag = 3;
 }
 message DeletePostReply {
 }
@@ -71,12 +78,42 @@ message GetPostReply {
 	Post post = 1;
 }
 
-message ListPostRequest {
+message BatchGetPostRequest {
+	repeated int64 ids = 1;
+}
+message BatchGetPostReply {
+	repeated Post posts = 1;
+}
+
+message ListMyPostRequest {
 	int64 last_id = 1;
 	int32 limit = 2;
 }
-message ListPostReply {
+message ListMyPostReply {
 	Post items = 1;
-	bool has_more = 2;
-	int64 last_id = 3;
+	int64 count = 2;
+	bool has_more = 3;
+	int64 last_id = 4;
+}
+
+message ListLatestPostRequest {
+	int64 last_id = 1;
+	int32 limit = 2;
+}
+message ListLatestPostReply {
+	Post items = 1;
+	int64 count = 2;
+	bool has_more = 3;
+	int64 last_id = 4;
+}
+
+message ListHotPostRequest {
+	int64 last_id = 1;
+	int32 limit = 2;
+}
+message ListHotPostReply {
+	Post items = 1;
+	int64 count = 2;
+	bool has_more = 3;
+	int64 last_id = 4;
 }

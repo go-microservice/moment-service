@@ -1,7 +1,7 @@
 package model
 
 type PostInfoModel struct {
-	ID           int     `gorm:"primary_key;AUTO_INCREMENT;column:id" json:"id"`
+	ID           int64   `gorm:"primary_key;AUTO_INCREMENT;column:id" json:"id"`
 	PostType     int     `gorm:"column:post_type" json:"post_type"`
 	UserID       int64   `gorm:"column:user_id" json:"user_id"`
 	Title        string  `gorm:"column:title" json:"title"`
