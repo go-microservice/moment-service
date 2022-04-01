@@ -3,17 +3,18 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"github.com/go-eagle/eagle/pkg/errcode"
-	"github.com/go-microservice/moment-service/internal/ecode"
-	"github.com/go-microservice/moment-service/internal/model"
-	"github.com/go-microservice/moment-service/internal/repository"
-	"github.com/pkg/errors"
 	"strings"
 	"time"
 
+	"github.com/go-eagle/eagle/pkg/errcode"
 	"github.com/google/wire"
+	"github.com/jinzhu/copier"
+	"github.com/pkg/errors"
 
 	pb "github.com/go-microservice/moment-service/api/post/v1"
+	"github.com/go-microservice/moment-service/internal/ecode"
+	"github.com/go-microservice/moment-service/internal/model"
+	"github.com/go-microservice/moment-service/internal/repository"
 )
 
 type PostType int
@@ -100,7 +101,7 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 		Visible:   int(VisibleOnlySelf),
 		CreatedAt: createTime,
 	}
-	postID, err := s.postRepo.CreatePostInfo(ctx, data)
+	postID, err := s.postRepo.CreatePostInfo(ctx, tx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -109,9 +110,24 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 	// create latest post
 	latestData := &model.PostLatestModel{
 		PostID:    postID,
+		UserID:    req.UserId,
+		DelFlag:   int(DelFlagNormal),
 		CreatedAt: createTime,
 	}
-	_, err = s.latestRepo.CreatePostLatest(ctx, latestData)
+	_, err = s.latestRepo.CreatePostLatest(ctx, tx, latestData)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// create hot post
+	hotData := &model.PostHotModel{
+		PostID:    postID,
+		UserID:    req.UserId,
+		DelFlag:   int(DelFlagNormal),
+		CreatedAt: createTime,
+	}
+	_, err = s.hotRepo.CreatePostHot(ctx, tx, hotData)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -121,9 +137,10 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 	userPostData := &model.UserPostModel{
 		UserID:    req.UserId,
 		PostID:    postID,
+		DelFlag:   int(DelFlagNormal),
 		CreatedAt: createTime,
 	}
-	_, err = s.userPostRepo.CreateUserPost(ctx, userPostData)
+	_, err = s.userPostRepo.CreateUserPost(ctx, tx, userPostData)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -134,7 +151,14 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 		return nil, err
 	}
 
-	return &pb.CreatePostReply{}, nil
+	data.ID = postID
+	pbReply := &pb.CreatePostReply{}
+	err = copier.Copy(pbReply, &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return pbReply, nil
 }
 
 func checkParam(req *pb.CreatePostRequest) error {

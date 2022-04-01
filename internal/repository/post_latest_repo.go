@@ -23,7 +23,7 @@ var _ PostLatestRepo = (*postLatestRepo)(nil)
 
 // PostLatestRepo define a repo interface
 type PostLatestRepo interface {
-	CreatePostLatest(ctx context.Context, data *model.PostLatestModel) (id int64, err error)
+	CreatePostLatest(ctx context.Context, db *gorm.DB, data *model.PostLatestModel) (id int64, err error)
 	UpdatePostLatest(ctx context.Context, id int64, data *model.PostLatestModel) error
 	GetPostLatest(ctx context.Context, id int64) (ret *model.PostLatestModel, err error)
 	BatchGetPostLatest(ctx context.Context, ids []int64) (ret []*model.PostLatestModel, err error)
@@ -43,8 +43,8 @@ func NewPostLatest(db *gorm.DB) PostLatestRepo {
 }
 
 // CreatePostLatest create a item
-func (r *postLatestRepo) CreatePostLatest(ctx context.Context, data *model.PostLatestModel) (id int64, err error) {
-	err = r.db.WithContext(ctx).Create(&data).Error
+func (r *postLatestRepo) CreatePostLatest(ctx context.Context, db *gorm.DB, data *model.PostLatestModel) (id int64, err error) {
+	err = db.WithContext(ctx).Create(&data).Error
 	if err != nil {
 		return 0, errors.Wrap(err, "[repo] create PostLatest err")
 	}

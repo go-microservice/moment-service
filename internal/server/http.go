@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/go-eagle/eagle/pkg/app"
 	"github.com/go-eagle/eagle/pkg/transport/http"
-	v1 "github.com/go-microservice/moment-service/api/helloworld/greeter/v1"
+	v1 "github.com/go-microservice/moment-service/api/post/v1"
 	"github.com/go-microservice/moment-service/internal/routers"
 	"github.com/go-microservice/moment-service/internal/service"
 )
@@ -20,7 +20,7 @@ func NewHTTPServer(c *app.ServerConfig) *http.Server {
 
 	srv.Handler = router
 
-	v1.RegisterGreeterHTTPServer(router, &service.GreeterService{})
+	v1.RegisterPostServiceHTTPServer(router, &service.PostServiceServer{})
 
 	return srv
 }

@@ -23,7 +23,7 @@ var _ UserPostRepo = (*userPostRepo)(nil)
 
 // UserPostRepo define a repo interface
 type UserPostRepo interface {
-	CreateUserPost(ctx context.Context, data *model.UserPostModel) (id int64, err error)
+	CreateUserPost(ctx context.Context, db *gorm.DB, data *model.UserPostModel) (id int64, err error)
 	UpdateUserPost(ctx context.Context, id int64, data *model.UserPostModel) error
 	GetUserPost(ctx context.Context, id int64) (ret *model.UserPostModel, err error)
 	BatchGetUserPost(ctx context.Context, ids []int64) (ret []*model.UserPostModel, err error)
@@ -43,8 +43,8 @@ func NewUserPost(db *gorm.DB) UserPostRepo {
 }
 
 // CreateUserPost create a item
-func (r *userPostRepo) CreateUserPost(ctx context.Context, data *model.UserPostModel) (id int64, err error) {
-	err = r.db.WithContext(ctx).Create(&data).Error
+func (r *userPostRepo) CreateUserPost(ctx context.Context, db *gorm.DB, data *model.UserPostModel) (id int64, err error) {
+	err = db.WithContext(ctx).Create(&data).Error
 	if err != nil {
 		return 0, errors.Wrap(err, "[repo] create UserPost err")
 	}

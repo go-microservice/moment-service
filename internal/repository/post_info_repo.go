@@ -28,7 +28,7 @@ var _ PostInfoRepo = (*postInfoRepo)(nil)
 
 // PostInfoRepo define a repo interface
 type PostInfoRepo interface {
-	CreatePostInfo(ctx context.Context, data *model.PostInfoModel) (id int64, err error)
+	CreatePostInfo(ctx context.Context, db *gorm.DB, data *model.PostInfoModel) (id int64, err error)
 	UpdatePostInfo(ctx context.Context, id int64, data *model.PostInfoModel) error
 	GetPostInfo(ctx context.Context, id int64) (ret *model.PostInfoModel, err error)
 	BatchGetPostInfo(ctx context.Context, ids []int64) (ret []*model.PostInfoModel, err error)
@@ -50,8 +50,8 @@ func NewPostInfo(db *gorm.DB, cache cache.PostInfoCache) PostInfoRepo {
 }
 
 // CreatePostInfo create a item
-func (r *postInfoRepo) CreatePostInfo(ctx context.Context, data *model.PostInfoModel) (id int64, err error) {
-	err = r.db.WithContext(ctx).Create(&data).Error
+func (r *postInfoRepo) CreatePostInfo(ctx context.Context, db *gorm.DB, data *model.PostInfoModel) (id int64, err error) {
+	err = db.WithContext(ctx).Create(&data).Error
 	if err != nil {
 		return 0, errors.Wrap(err, "[repo] create PostInfo err")
 	}

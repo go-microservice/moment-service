@@ -5,16 +5,11 @@ package repository
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/pkg/errors"
-	"github.com/spf13/cast"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 
-	"github.com/go-microservice/moment-service/internal/cache"
 	"github.com/go-microservice/moment-service/internal/model"
 )
 
@@ -28,7 +23,7 @@ var _ PostHotRepo = (*postHotRepo)(nil)
 
 // PostHotRepo define a repo interface
 type PostHotRepo interface {
-	CreatePostHot(ctx context.Context, data *model.PostHotModel) (id int64, err error)
+	CreatePostHot(ctx context.Context, db *gorm.DB, data *model.PostHotModel) (id int64, err error)
 	UpdatePostHot(ctx context.Context, id int64, data *model.PostHotModel) error
 	GetPostHot(ctx context.Context, id int64) (ret *model.PostHotModel, err error)
 	BatchGetPostHot(ctx context.Context, ids []int64) (ret []*model.PostHotModel, err error)
@@ -48,13 +43,13 @@ func NewPostHot(db *gorm.DB) PostHotRepo {
 }
 
 // CreatePostHot create a item
-func (r *postHotRepo) CreatePostHot(ctx context.Context, data *model.PostHotModel) (id int64, err error) {
-	err = r.db.WithContext(ctx).Create(&data).Error
+func (r *postHotRepo) CreatePostHot(ctx context.Context, db *gorm.DB, data *model.PostHotModel) (id int64, err error) {
+	err = db.WithContext(ctx).Create(&data).Error
 	if err != nil {
 		return 0, errors.Wrap(err, "[repo] create PostHot err")
 	}
 
-	return data.ID, nil
+	return data.PostID, nil
 }
 
 // UpdatePostHot update item
@@ -77,7 +72,7 @@ func (r *postHotRepo) GetPostHot(ctx context.Context, id int64) (ret *model.Post
 	if err != nil {
 		return
 	}
-	s
+
 	return data, nil
 }
 
