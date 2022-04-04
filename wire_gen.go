@@ -7,6 +7,9 @@ package main
 
 import (
 	"github.com/go-eagle/eagle/pkg/app"
+	"github.com/go-microservice/moment-service/internal/cache"
+	"github.com/go-microservice/moment-service/internal/model"
+	"github.com/go-microservice/moment-service/internal/repository"
 	"github.com/go-microservice/moment-service/internal/server"
 	"github.com/go-microservice/moment-service/internal/service"
 )
@@ -18,8 +21,14 @@ import (
 // Injectors from wire.go:
 
 func InitApp(cfg *app.Config, config *app.ServerConfig) (*app.App, error) {
-	greeterService := service.NewGreeterService()
-	grpcServer := server.NewGRPCServer(config, greeterService)
+	db := model.Init()
+	postInfoCache := cache.NewPostInfoCache()
+	postInfoRepo := repository.NewPostInfo(db, postInfoCache)
+	postLatestRepo := repository.NewPostLatest(db)
+	postHotRepo := repository.NewPostHot(db)
+	userPostRepo := repository.NewUserPost(db)
+	postServiceServer := service.NewPostServiceServer(postInfoRepo, postLatestRepo, postHotRepo, userPostRepo)
+	grpcServer := server.NewGRPCServer(config, postServiceServer)
 	appApp := newApp(cfg, grpcServer)
 	return appApp, nil
 }

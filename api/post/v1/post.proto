@@ -47,10 +47,10 @@ message CreatePostRequest {
 	string text = 3;
 	string pic_keys = 4;
 	string video_key = 5;
-	string video_duration = 6;
+	int32 video_duration = 6;
 	string cover_key = 7;
-	string cover_width = 8;
-	string cover_height = 9;
+	int32 cover_width = 8;
+	int32 cover_height = 9;
 	float longitude = 10;
 	float latitude = 11;
 	string position = 12;

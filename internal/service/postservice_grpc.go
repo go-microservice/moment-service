@@ -152,13 +152,15 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 	}
 
 	data.ID = postID
-	pbReply := &pb.CreatePostReply{}
-	err = copier.Copy(pbReply, &data)
+	// NOTE: 不能copy到嵌套的结构体中，所以单独出来copy
+	pbPost, err := convertPost(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return pbReply, nil
+	return &pb.CreatePostReply{
+		Post: pbPost,
+	}, nil
 }
 
 func checkParam(req *pb.CreatePostRequest) error {
@@ -178,8 +180,8 @@ func checkParam(req *pb.CreatePostRequest) error {
 		})).Status(req).Err()
 	}
 	if len(req.VideoKey) > 0 {
-		if len(req.CoverKey) == 0 || len(req.VideoDuration) == 0 ||
-			len(req.CoverWidth) == 0 || len(req.CoverHeight) == 0 {
+		if len(req.CoverKey) == 0 || req.VideoDuration == 0 ||
+			req.CoverWidth == 0 || req.CoverHeight == 0 {
 			return ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 				"msg": errors.New("video_duration or cover_key or width or height is empty"),
 			})).Status(req).Err()
@@ -190,14 +192,14 @@ func checkParam(req *pb.CreatePostRequest) error {
 }
 
 func getPostType(req *pb.CreatePostRequest) PostType {
-	if len(req.PicKeys) == 0 && len(req.VideoKey) == 0 && len(req.Text) == 0 {
-		return PostTypeText
-	}
 	if len(req.PicKeys) > 0 {
 		return PostTypeImage
 	}
 	if len(req.VideoKey) > 0 {
 		return PostTypeVideo
+	}
+	if len(req.Text) > 0 {
+		return PostTypeText
 	}
 
 	return PostTypeUnknown
@@ -220,6 +222,10 @@ func getContent(postType PostType, req *pb.CreatePostRequest) (string, error) {
 			"cover_width":  req.CoverWidth,
 			"cover_height": req.CoverHeight,
 		}
+	default:
+		return "", ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
+			"msg": errors.New("post_type is error"),
+		})).Status(req).Err()
 	}
 	content, err := json.Marshal(data)
 	if err != nil {
@@ -230,21 +236,51 @@ func getContent(postType PostType, req *pb.CreatePostRequest) (string, error) {
 func (s *PostServiceServer) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostReply, error) {
 	return &pb.UpdatePostReply{}, nil
 }
+
 func (s *PostServiceServer) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostReply, error) {
 	return &pb.DeletePostReply{}, nil
 }
+
 func (s *PostServiceServer) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPostReply, error) {
-	return &pb.GetPostReply{}, nil
+	if req.GetId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
+			"msg": errors.New("post_id is empty"),
+		})).Status(req).Err()
+	}
+	post, err := s.postRepo.GetPostInfo(ctx, req.GetId())
+	if err != nil {
+		return nil, err
+	}
+	pbPost, err := convertPost(post)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.GetPostReply{
+		Post: pbPost,
+	}, nil
 }
+
 func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *pb.BatchGetPostRequest) (*pb.BatchGetPostReply, error) {
 	return &pb.BatchGetPostReply{}, nil
 }
+
 func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRequest) (*pb.ListMyPostReply, error) {
 	return &pb.ListMyPostReply{}, nil
 }
+
 func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *pb.ListLatestPostRequest) (*pb.ListLatestPostReply, error) {
 	return &pb.ListLatestPostReply{}, nil
 }
+
 func (s *PostServiceServer) ListHotPost(ctx context.Context, req *pb.ListHotPostRequest) (*pb.ListHotPostReply, error) {
 	return &pb.ListHotPostReply{}, nil
+}
+
+func convertPost(p *model.PostInfoModel) (*pb.Post, error) {
+	pbPost := &pb.Post{}
+	err := copier.Copy(pbPost, &p)
+	if err != nil {
+		return nil, err
+	}
+	return pbPost, nil
 }
