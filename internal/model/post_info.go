@@ -3,7 +3,7 @@ package model
 type PostInfoModel struct {
 	ID           int64   `gorm:"primary_key;AUTO_INCREMENT;column:id" json:"id"`
 	PostType     int     `gorm:"column:post_type" json:"post_type"`
-	UserID       int64   `gorm:"column:user_id" json:"user_id"`
+	UserId       int64   `gorm:"column:user_id" json:"user_id"`
 	Title        string  `gorm:"column:title" json:"title"`
 	Content      string  `gorm:"column:content" json:"content"`
 	ViewCount    int     `gorm:"column:view_count" json:"view_count"`

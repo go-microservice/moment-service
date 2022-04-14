@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -82,6 +83,7 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 		return nil, err
 	}
 
+	// start transaction
 	tx := model.GetDB().Begin()
 	if tx == nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status().Err()
@@ -91,7 +93,7 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 	createTime := time.Now().Unix()
 	data := &model.PostInfoModel{
 		PostType:  int(postType),
-		UserID:    req.UserId,
+		UserId:    req.UserId,
 		Title:     req.Title,
 		Content:   content,
 		Longitude: float64(req.Longitude),
@@ -233,6 +235,7 @@ func getContent(postType PostType, req *pb.CreatePostRequest) (string, error) {
 	}
 	return string(content), nil
 }
+
 func (s *PostServiceServer) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostReply, error) {
 	return &pb.UpdatePostReply{}, nil
 }
@@ -261,7 +264,28 @@ func (s *PostServiceServer) GetPost(ctx context.Context, req *pb.GetPostRequest)
 }
 
 func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *pb.BatchGetPostRequest) (*pb.BatchGetPostReply, error) {
-	return &pb.BatchGetPostReply{}, nil
+	if len(req.GetIds()) == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
+			"msg": errors.New("post_ids is empty"),
+		})).Status(req).Err()
+	}
+
+	posts, err := s.postRepo.BatchGetPostInfo(ctx, req.GetIds())
+	if err != nil {
+		return nil, err
+	}
+	pbPosts := make([]*pb.Post, 0, len(posts))
+	for _, post := range posts {
+		pbPost, err := convertPost(post)
+		if err != nil {
+			return nil, err
+		}
+		pbPosts = append(pbPosts, pbPost)
+	}
+
+	return &pb.BatchGetPostReply{
+		Posts: pbPosts,
+	}, nil
 }
 
 func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRequest) (*pb.ListMyPostReply, error) {
@@ -282,5 +306,52 @@ func convertPost(p *model.PostInfoModel) (*pb.Post, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// NOTE: 字段大小写不一致时需要手动转换
+	pbPost.Id = p.ID
+	pbPost.Content, err = convertContent(p)
+	if err != nil {
+		return nil, err
+	}
 	return pbPost, nil
+}
+
+func convertContent(p *model.PostInfoModel) (string, error) {
+	if len(p.Content) == 0 {
+		return "", nil
+	}
+
+	rawContent := make(map[string]interface{})
+	err := json.Unmarshal([]byte(p.Content), &rawContent)
+	fmt.Println("------", rawContent)
+	if err != nil {
+		fmt.Println("--err1----", err)
+		return "", err
+	}
+
+	data := make(map[string]interface{})
+	postType := PostType(p.PostType)
+	switch postType {
+	case PostTypeText:
+		data["text"] = rawContent["text"]
+	case PostTypeImage:
+		data["pic"] = rawContent["pic"]
+	case PostTypeVideo:
+		vContent := rawContent["video"].(map[string]interface{})
+		data["video"] = map[string]interface{}{
+			"video_url":    vContent["video_key"],
+			"duration":     vContent["duration"],
+			"cover_url":    vContent["cover_key"],
+			"cover_width":  vContent["cover_width"],
+			"cover_height": vContent["cover_height"],
+		}
+	}
+
+	fmt.Println("data------", data)
+	content, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("--err2----", err)
+		return "", err
+	}
+	return string(content), nil
 }
