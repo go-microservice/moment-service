@@ -86,11 +86,12 @@ message BatchGetPostReply {
 }
 
 message ListMyPostRequest {
-	int64 last_id = 1;
-	int32 limit = 2;
+	int64 user_id = 1;
+	int64 last_id = 2;
+	int32 limit = 3;
 }
 message ListMyPostReply {
-	Post items = 1;
+	repeated Post items = 1;
 	int64 count = 2;
 	bool has_more = 3;
 	int64 last_id = 4;

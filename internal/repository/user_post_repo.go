@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -17,6 +18,7 @@ var (
 	_tableUserPostName   = (&model.UserPostModel{}).TableName()
 	_getUserPostSQL      = "SELECT * FROM %s WHERE id = ?"
 	_batchGetUserPostSQL = "SELECT * FROM %s WHERE id IN (%s)"
+	_getPostByUserIdSQL  = "SELECT * FROM %s WHERE user_id = ? and post_id <= ? order by post_id desc limit ?"
 )
 
 var _ UserPostRepo = (*userPostRepo)(nil)
@@ -27,6 +29,7 @@ type UserPostRepo interface {
 	UpdateUserPost(ctx context.Context, id int64, data *model.UserPostModel) error
 	GetUserPost(ctx context.Context, id int64) (ret *model.UserPostModel, err error)
 	BatchGetUserPost(ctx context.Context, ids []int64) (ret []*model.UserPostModel, err error)
+	GetUserPostByUserId(ctx context.Context, userId int64, lastId int64, limit int32) (ret []*model.UserPostModel, err error)
 }
 
 type userPostRepo struct {
@@ -80,6 +83,16 @@ func (r *userPostRepo) GetUserPost(ctx context.Context, id int64) (ret *model.Us
 func (r *userPostRepo) BatchGetUserPost(ctx context.Context, ids []int64) (ret []*model.UserPostModel, err error) {
 	items := make([]*model.UserPostModel, 0)
 	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_batchGetUserPostSQL, _tableUserPostName), ids).Scan(&items).Error
+	if err != nil {
+		return
+	}
+	return items, nil
+}
+
+// GetUserPostByUserId get items by user id
+func (r *userPostRepo) GetUserPostByUserId(ctx context.Context, userId int64, lastId int64, limit int32) (ret []*model.UserPostModel, err error) {
+	items := make([]*model.UserPostModel, 0)
+	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_getPostByUserIdSQL, _tableUserPostName), userId, lastId, limit).Scan(&items).Error
 	if err != nil {
 		return
 	}

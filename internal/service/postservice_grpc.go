@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -23,6 +23,7 @@ type DeleteType int
 type VisibleType int
 
 const (
+	// Post 类型
 	PostTypeUnknown PostType = 0 // 未知
 	PostTypeText    PostType = 1 // 文本
 	PostTypeImage   PostType = 2 // 图片
@@ -30,7 +31,7 @@ const (
 
 	DelFlagNormal  DeleteType = 0 // 正常
 	DelFlagByUser  DeleteType = 1 // 用户删除
-	delFlagByAdmin DeleteType = 2 // 删除
+	delFlagByAdmin DeleteType = 2 // 管理员删除
 
 	VisibleAll      VisibleType = 0 // 公开
 	VisibleOnlySelf VisibleType = 1 // 仅自己可见
@@ -289,7 +290,44 @@ func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *pb.BatchGetPo
 }
 
 func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRequest) (*pb.ListMyPostReply, error) {
-	return &pb.ListMyPostReply{}, nil
+	if req.GetLastId() == 0 {
+		req.LastId = math.MaxInt64
+	}
+	if req.GetLimit() == 0 {
+		req.Limit = 10
+	}
+
+	// get user posts
+	userPosts, err := s.userPostRepo.GetUserPostByUserId(ctx, req.GetUserId(), req.GetLastId(), req.GetLimit())
+	if err != nil {
+		return nil, err
+	}
+
+	// batch get post info
+	var postIds []int64
+	for _, userPost := range userPosts {
+		postIds = append(postIds, userPost.PostID)
+	}
+	posts, err := s.postRepo.BatchGetPostInfo(ctx, postIds)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert to pb
+	pbPosts := make([]*pb.Post, 0, len(posts))
+	for _, post := range posts {
+		pbPost, err := convertPost(post)
+		if err != nil {
+			return nil, err
+		}
+		pbPosts = append(pbPosts, pbPost)
+	}
+
+	return &pb.ListMyPostReply{
+		Items:   pbPosts,
+		HasMore: false,
+		LastId:  0,
+	}, nil
 }
 
 func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *pb.ListLatestPostRequest) (*pb.ListLatestPostReply, error) {
@@ -323,9 +361,7 @@ func convertContent(p *model.PostInfoModel) (string, error) {
 
 	rawContent := make(map[string]interface{})
 	err := json.Unmarshal([]byte(p.Content), &rawContent)
-	fmt.Println("------", rawContent)
 	if err != nil {
-		fmt.Println("--err1----", err)
 		return "", err
 	}
 
@@ -347,10 +383,8 @@ func convertContent(p *model.PostInfoModel) (string, error) {
 		}
 	}
 
-	fmt.Println("data------", data)
 	content, err := json.Marshal(data)
 	if err != nil {
-		fmt.Println("--err2----", err)
 		return "", err
 	}
 	return string(content), nil
