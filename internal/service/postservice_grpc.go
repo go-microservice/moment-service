@@ -298,9 +298,19 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRe
 	}
 
 	// get user posts
-	userPosts, err := s.userPostRepo.GetUserPostByUserId(ctx, req.GetUserId(), req.GetLastId(), req.GetLimit())
+	userPosts, err := s.userPostRepo.GetUserPostByUserId(ctx, req.GetUserId(), req.GetLastId(), req.GetLimit()+1)
 	if err != nil {
 		return nil, err
+	}
+
+	var (
+		hasMore bool
+		lastId  int64
+	)
+	if len(userPosts) > int(req.GetLimit()) {
+		hasMore = true
+		lastId = userPosts[len(userPosts)-1].ID
+		userPosts = userPosts[:len(userPosts)-1]
 	}
 
 	// batch get post info
@@ -325,17 +335,114 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRe
 
 	return &pb.ListMyPostReply{
 		Items:   pbPosts,
-		HasMore: false,
-		LastId:  0,
+		Count:   int64(len(pbPosts)),
+		HasMore: hasMore,
+		LastId:  lastId,
 	}, nil
 }
 
 func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *pb.ListLatestPostRequest) (*pb.ListLatestPostReply, error) {
-	return &pb.ListLatestPostReply{}, nil
+	if req.GetLastId() == 0 {
+		req.LastId = math.MaxInt64
+	}
+	if req.GetLimit() == 0 {
+		req.Limit = 10
+	}
+
+	// get latest posts
+	latestPosts, err := s.latestRepo.GetLatestPostList(ctx, req.GetLastId(), req.GetLimit()+1)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		hasMore bool
+		lastId  int64
+	)
+	if len(latestPosts) > int(req.GetLimit()) {
+		hasMore = true
+		lastId = latestPosts[len(latestPosts)-1].PostID
+		latestPosts = latestPosts[:len(latestPosts)-1]
+	}
+
+	// batch get post info
+	var postIds []int64
+	for _, latestPost := range latestPosts {
+		postIds = append(postIds, latestPost.PostID)
+	}
+	posts, err := s.postRepo.BatchGetPostInfo(ctx, postIds)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert to pb
+	pbPosts := make([]*pb.Post, 0, len(posts))
+	for _, post := range posts {
+		pbPost, err := convertPost(post)
+		if err != nil {
+			return nil, err
+		}
+		pbPosts = append(pbPosts, pbPost)
+	}
+
+	return &pb.ListLatestPostReply{
+		Items:   pbPosts,
+		Count:   int64(len(pbPosts)),
+		HasMore: hasMore,
+		LastId:  lastId,
+	}, nil
 }
 
 func (s *PostServiceServer) ListHotPost(ctx context.Context, req *pb.ListHotPostRequest) (*pb.ListHotPostReply, error) {
-	return &pb.ListHotPostReply{}, nil
+	if req.GetLastId() == 0 {
+		req.LastId = math.MaxInt64
+	}
+	if req.GetLimit() == 0 {
+		req.Limit = 10
+	}
+
+	// get hot posts
+	hotPosts, err := s.hotRepo.GetHotPostList(ctx, req.GetLastId(), req.GetLimit()+1)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		hasMore bool
+		lastId  int64
+	)
+	if len(hotPosts) > int(req.GetLimit()) {
+		hasMore = true
+		lastId = hotPosts[len(hotPosts)-1].PostID
+		hotPosts = hotPosts[:len(hotPosts)-1]
+	}
+
+	// batch get post info
+	var postIds []int64
+	for _, hotPost := range hotPosts {
+		postIds = append(postIds, hotPost.PostID)
+	}
+	posts, err := s.postRepo.BatchGetPostInfo(ctx, postIds)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert to pb
+	pbPosts := make([]*pb.Post, 0, len(posts))
+	for _, post := range posts {
+		pbPost, err := convertPost(post)
+		if err != nil {
+			return nil, err
+		}
+		pbPosts = append(pbPosts, pbPost)
+	}
+
+	return &pb.ListHotPostReply{
+		Items:   pbPosts,
+		Count:   int64(len(pbPosts)),
+		HasMore: hasMore,
+		LastId:  lastId,
+	}, nil
 }
 
 func convertPost(p *model.PostInfoModel) (*pb.Post, error) {

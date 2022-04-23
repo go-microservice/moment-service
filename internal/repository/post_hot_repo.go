@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -17,6 +18,7 @@ var (
 	_tablePostHotName   = (&model.PostHotModel{}).TableName()
 	_getPostHotSQL      = "SELECT * FROM %s WHERE id = ?"
 	_batchGetPostHotSQL = "SELECT * FROM %s WHERE id IN (%s)"
+	_getHotPostListSQL  = "SELECT * FROM %s WHERE post_id <= ? order by score desc limit ?"
 )
 
 var _ PostHotRepo = (*postHotRepo)(nil)
@@ -27,6 +29,7 @@ type PostHotRepo interface {
 	UpdatePostHot(ctx context.Context, id int64, data *model.PostHotModel) error
 	GetPostHot(ctx context.Context, id int64) (ret *model.PostHotModel, err error)
 	BatchGetPostHot(ctx context.Context, ids []int64) (ret []*model.PostHotModel, err error)
+	GetHotPostList(ctx context.Context, lastId int64, limit int32) (ret []*model.PostHotModel, err error)
 }
 
 type postHotRepo struct {
@@ -80,6 +83,16 @@ func (r *postHotRepo) GetPostHot(ctx context.Context, id int64) (ret *model.Post
 func (r *postHotRepo) BatchGetPostHot(ctx context.Context, ids []int64) (ret []*model.PostHotModel, err error) {
 	items := make([]*model.PostHotModel, 0)
 	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_batchGetPostHotSQL, _tablePostHotName), ids).Scan(&items).Error
+	if err != nil {
+		return
+	}
+	return items, nil
+}
+
+// GetHotPostList get hot post list
+func (r *postHotRepo) GetHotPostList(ctx context.Context, lastId int64, limit int32) (ret []*model.PostHotModel, err error) {
+	items := make([]*model.PostHotModel, 0)
+	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_getHotPostListSQL, _tablePostHotName), lastId, limit).Scan(&items).Error
 	if err != nil {
 		return
 	}

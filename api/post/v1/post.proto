@@ -102,7 +102,7 @@ message ListLatestPostRequest {
 	int32 limit = 2;
 }
 message ListLatestPostReply {
-	Post items = 1;
+	repeated Post items = 1;
 	int64 count = 2;
 	bool has_more = 3;
 	int64 last_id = 4;
@@ -113,7 +113,7 @@ message ListHotPostRequest {
 	int32 limit = 2;
 }
 message ListHotPostReply {
-	Post items = 1;
+	repeated Post items = 1;
 	int64 count = 2;
 	bool has_more = 3;
 	int64 last_id = 4;

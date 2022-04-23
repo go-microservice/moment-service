@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -17,6 +18,7 @@ var (
 	_tablePostLatestName   = (&model.PostLatestModel{}).TableName()
 	_getPostLatestSQL      = "SELECT * FROM %s WHERE id = ?"
 	_batchGetPostLatestSQL = "SELECT * FROM %s WHERE id IN (%s)"
+	_getLatestPostListSQL  = "SELECT * FROM %s WHERE post_id <= ? order by post_id desc limit ?"
 )
 
 var _ PostLatestRepo = (*postLatestRepo)(nil)
@@ -27,6 +29,7 @@ type PostLatestRepo interface {
 	UpdatePostLatest(ctx context.Context, id int64, data *model.PostLatestModel) error
 	GetPostLatest(ctx context.Context, id int64) (ret *model.PostLatestModel, err error)
 	BatchGetPostLatest(ctx context.Context, ids []int64) (ret []*model.PostLatestModel, err error)
+	GetLatestPostList(ctx context.Context, lastId int64, limit int32) (ret []*model.PostLatestModel, err error)
 }
 
 type postLatestRepo struct {
@@ -80,6 +83,16 @@ func (r *postLatestRepo) GetPostLatest(ctx context.Context, id int64) (ret *mode
 func (r *postLatestRepo) BatchGetPostLatest(ctx context.Context, ids []int64) (ret []*model.PostLatestModel, err error) {
 	items := make([]*model.PostLatestModel, 0)
 	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_batchGetPostLatestSQL, _tablePostLatestName), ids).Scan(&items).Error
+	if err != nil {
+		return
+	}
+	return items, nil
+}
+
+// GetLatestPostList get latest post list
+func (r *postLatestRepo) GetLatestPostList(ctx context.Context, lastId int64, limit int32) (ret []*model.PostLatestModel, err error) {
+	items := make([]*model.PostLatestModel, 0)
+	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_getLatestPostListSQL, _tablePostLatestName), lastId, limit).Scan(&items).Error
 	if err != nil {
 		return
 	}
