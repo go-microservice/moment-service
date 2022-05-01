@@ -28,7 +28,12 @@ func InitApp(cfg *app.Config, config *app.ServerConfig) (*app.App, error) {
 	postHotRepo := repository.NewPostHot(db)
 	userPostRepo := repository.NewUserPost(db)
 	postServiceServer := service.NewPostServiceServer(postInfoRepo, postLatestRepo, postHotRepo, userPostRepo)
-	grpcServer := server.NewGRPCServer(config, postServiceServer)
+	commentInfoCache := cache.NewCommentInfoCache()
+	commentInfoRepo := repository.NewCommentInfo(db, commentInfoCache)
+	commentContentCache := cache.NewCommentContentCache()
+	commentContentRepo := repository.NewCommentContent(db, commentContentCache)
+	commentServiceServer := service.NewCommentServiceServer(commentInfoRepo, commentContentRepo)
+	grpcServer := server.NewGRPCServer(config, postServiceServer, commentServiceServer)
 	appApp := newApp(cfg, grpcServer)
 	return appApp, nil
 }

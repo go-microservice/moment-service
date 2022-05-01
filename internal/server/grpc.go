@@ -7,7 +7,8 @@ import (
 	"github.com/go-eagle/eagle/pkg/transport/grpc"
 	"github.com/google/wire"
 
-	v1 "github.com/go-microservice/moment-service/api/post/v1"
+	cmtv1 "github.com/go-microservice/moment-service/api/comment/v1"
+	postv1 "github.com/go-microservice/moment-service/api/post/v1"
 	"github.com/go-microservice/moment-service/internal/service"
 )
 
@@ -15,7 +16,11 @@ import (
 var ProviderSet = wire.NewSet(NewGRPCServer)
 
 // NewGRPCServer creates a gRPC server
-func NewGRPCServer(cfg *app.ServerConfig, svc *service.PostServiceServer) *grpc.Server {
+func NewGRPCServer(
+	cfg *app.ServerConfig,
+	postSvc *service.PostServiceServer,
+	commentSvc *service.CommentServiceServer,
+) *grpc.Server {
 
 	grpcServer := grpc.NewServer(
 		grpc.Network("tcp"),
@@ -24,7 +29,8 @@ func NewGRPCServer(cfg *app.ServerConfig, svc *service.PostServiceServer) *grpc.
 	)
 
 	// register biz service
-	v1.RegisterPostServiceServer(grpcServer, svc)
+	postv1.RegisterPostServiceServer(grpcServer, postSvc)
+	cmtv1.RegisterCommentServiceServer(grpcServer, commentSvc)
 
 	return grpcServer
 }

@@ -1,7 +1,14 @@
 package service
 
+import (
+	"github.com/google/wire"
+)
+
 // Svc global var
 var Svc Service
+
+// ProviderSet is service providers.
+var ProviderSet = wire.NewSet(NewPostServiceServer, NewCommentServiceServer)
 
 // Service define all service
 type Service interface {

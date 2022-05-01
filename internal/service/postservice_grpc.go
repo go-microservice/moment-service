@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-eagle/eagle/pkg/errcode"
-	"github.com/google/wire"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 
@@ -41,9 +40,6 @@ var (
 	_ pb.PostServiceServer = (*PostServiceServer)(nil)
 )
 
-// ProviderSet is service providers.
-var ProviderSet = wire.NewSet(NewPostServiceServer)
-
 type PostServiceServer struct {
 	pb.UnimplementedPostServiceServer
 
@@ -69,7 +65,7 @@ func NewPostServiceServer(
 
 func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostReply, error) {
 	// check param
-	if err := checkParam(req); err != nil {
+	if err := checkPostParam(req); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +104,6 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 	if err != nil {
 		return nil, err
 	}
-	_ = postID
 
 	// create latest post
 	latestData := &model.PostLatestModel{
@@ -166,7 +161,7 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 	}, nil
 }
 
-func checkParam(req *pb.CreatePostRequest) error {
+func checkPostParam(req *pb.CreatePostRequest) error {
 	if req.UserId == 0 {
 		return ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 			"msg": errors.New("user_id is empty"),
