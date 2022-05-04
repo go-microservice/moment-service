@@ -10,9 +10,11 @@ service CommentService {
 	rpc CreateComment (CreateCommentRequest) returns (CreateCommentReply);
 	rpc UpdateComment (UpdateCommentRequest) returns (UpdateCommentReply);
 	rpc DeleteComment (DeleteCommentRequest) returns (DeleteCommentReply);
+	rpc ReplyComment (ReplyCommentRequest) returns (ReplyCommentReply);
 	rpc GetComment (GetCommentRequest) returns (GetCommentReply);
 	rpc BatchGetComment(BatchGetCommentRequest) returns (BatchGetCommentReply);
-	rpc ListComment (ListCommentRequest) returns (ListCommentReply);
+	rpc ListHotComment (ListCommentRequest) returns (ListCommentReply);
+	rpc ListLatestComment (ListCommentRequest) returns (ListCommentReply);
 }
 
 message Comment {
@@ -61,6 +63,21 @@ message DeleteCommentRequest {
 }
 message DeleteCommentReply {}
 
+message ReplyCommentRequest {
+	int64 comment_id = 1;
+	int32 obj_type = 2;
+	int64 obj_id = 3;
+	int64 user_id = 4;
+	string content = 5;
+	int64 root_id = 6;
+	int64 parent_id = 7;
+	string device_type = 8;
+	string ip = 9;
+}
+message ReplyCommentReply {
+
+}
+
 message GetCommentRequest {
 	int64 id = 1;
 }
@@ -76,8 +93,9 @@ message BatchGetCommentReply {
 }
 
 message ListCommentRequest {
-	int64 last_id = 1;
-	int32 limit = 2;
+	int64 obj_id = 1;
+	int64 last_id = 2;
+	int32 limit = 3;
 }
 message ListCommentReply {
 	repeated Comment items = 1;

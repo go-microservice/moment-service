@@ -6,4 +6,13 @@ import (
 )
 
 // ProviderSet is repo providers.
-var ProviderSet = wire.NewSet(model.Init, NewPostInfo, NewPostLatest, NewPostHot, NewUserPost, NewCommentInfo, NewCommentContent)
+var ProviderSet = wire.NewSet(
+	model.Init,
+	NewPostInfo,
+	NewPostLatest,
+	NewPostHot,
+	NewUserPost,
+	NewCommentInfo,
+	NewCommentContent,
+	NewCommentIndex,
+)

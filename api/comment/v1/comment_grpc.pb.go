@@ -27,7 +27,8 @@ type CommentServiceClient interface {
 	DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*DeleteCommentReply, error)
 	GetComment(ctx context.Context, in *GetCommentRequest, opts ...grpc.CallOption) (*GetCommentReply, error)
 	BatchGetComment(ctx context.Context, in *BatchGetCommentRequest, opts ...grpc.CallOption) (*BatchGetCommentReply, error)
-	ListComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error)
+	ListHotComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error)
+	ListLatestComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error)
 }
 
 type commentServiceClient struct {
@@ -83,9 +84,18 @@ func (c *commentServiceClient) BatchGetComment(ctx context.Context, in *BatchGet
 	return out, nil
 }
 
-func (c *commentServiceClient) ListComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error) {
+func (c *commentServiceClient) ListHotComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error) {
 	out := new(ListCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ListComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ListHotComment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *commentServiceClient) ListLatestComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error) {
+	out := new(ListCommentReply)
+	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ListLatestComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +111,8 @@ type CommentServiceServer interface {
 	DeleteComment(context.Context, *DeleteCommentRequest) (*DeleteCommentReply, error)
 	GetComment(context.Context, *GetCommentRequest) (*GetCommentReply, error)
 	BatchGetComment(context.Context, *BatchGetCommentRequest) (*BatchGetCommentReply, error)
-	ListComment(context.Context, *ListCommentRequest) (*ListCommentReply, error)
+	ListHotComment(context.Context, *ListCommentRequest) (*ListCommentReply, error)
+	ListLatestComment(context.Context, *ListCommentRequest) (*ListCommentReply, error)
 	mustEmbedUnimplementedCommentServiceServer()
 }
 
@@ -124,8 +135,11 @@ func (UnimplementedCommentServiceServer) GetComment(context.Context, *GetComment
 func (UnimplementedCommentServiceServer) BatchGetComment(context.Context, *BatchGetCommentRequest) (*BatchGetCommentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchGetComment not implemented")
 }
-func (UnimplementedCommentServiceServer) ListComment(context.Context, *ListCommentRequest) (*ListCommentReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListComment not implemented")
+func (UnimplementedCommentServiceServer) ListHotComment(context.Context, *ListCommentRequest) (*ListCommentReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListHotComment not implemented")
+}
+func (UnimplementedCommentServiceServer) ListLatestComment(context.Context, *ListCommentRequest) (*ListCommentReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListLatestComment not implemented")
 }
 func (UnimplementedCommentServiceServer) mustEmbedUnimplementedCommentServiceServer() {}
 
@@ -230,20 +244,38 @@ func _CommentService_BatchGetComment_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _CommentService_ListComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _CommentService_ListHotComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListCommentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CommentServiceServer).ListComment(ctx, in)
+		return srv.(CommentServiceServer).ListHotComment(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/ListComment",
+		FullMethod: "/api.comment.v1.CommentService/ListHotComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommentServiceServer).ListComment(ctx, req.(*ListCommentRequest))
+		return srv.(CommentServiceServer).ListHotComment(ctx, req.(*ListCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommentService_ListLatestComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommentServiceServer).ListLatestComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.comment.v1.CommentService/ListLatestComment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommentServiceServer).ListLatestComment(ctx, req.(*ListCommentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -276,8 +308,12 @@ var CommentService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CommentService_BatchGetComment_Handler,
 		},
 		{
-			MethodName: "ListComment",
-			Handler:    _CommentService_ListComment_Handler,
+			MethodName: "ListHotComment",
+			Handler:    _CommentService_ListHotComment_Handler,
+		},
+		{
+			MethodName: "ListLatestComment",
+			Handler:    _CommentService_ListLatestComment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

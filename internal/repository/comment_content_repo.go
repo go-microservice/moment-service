@@ -56,7 +56,7 @@ func (r *commentContentRepo) CreateCommentContent(ctx context.Context, db *gorm.
 		return 0, errors.Wrap(err, "[repo] create CommentContent err")
 	}
 
-	return data.CommentID, nil
+	return data.Id, nil
 }
 
 // UpdateCommentContent update item
@@ -91,7 +91,7 @@ func (r *commentContentRepo) GetCommentContent(ctx context.Context, id int64) (r
 		return
 	}
 	// write cache
-	if data.CommentID > 0 {
+	if data.Id > 0 {
 		err = r.cache.SetCommentContentCache(ctx, id, data, 5*time.Minute)
 		if err != nil {
 			return nil, err

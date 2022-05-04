@@ -1,7 +1,7 @@
 package model
 
 type CommentContentModel struct {
-	CommentID  int64  `gorm:"column:comment_id" json:"comment_id"`
+	Id         int64  `gorm:"column:id" json:"id"`
 	Content    string `gorm:"column:content" json:"content"`
 	DeviceType string `gorm:"column:device_type" json:"device_type"`
 	IP         string `gorm:"column:ip" json:"ip"`

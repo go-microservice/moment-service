@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"math"
 	"time"
 
 	pb "github.com/go-microservice/moment-service/api/comment/v1"
@@ -9,6 +10,13 @@ import (
 	"github.com/go-microservice/moment-service/internal/model"
 	"github.com/go-microservice/moment-service/internal/repository"
 	"github.com/jinzhu/copier"
+)
+
+type ObjType int
+
+const (
+	// post
+	CommentObjTypePost ObjType = 1
 )
 
 var (
@@ -20,15 +28,18 @@ type CommentServiceServer struct {
 
 	cmtInfoRepo    repository.CommentInfoRepo
 	cmtContentRepo repository.CommentContentRepo
+	cmtIndexRepo   repository.CommentIndexRepo
 }
 
 func NewCommentServiceServer(
 	cmtInfoRepo repository.CommentInfoRepo,
 	cmtContentRepo repository.CommentContentRepo,
+	cmtIndexRepo repository.CommentIndexRepo,
 ) *CommentServiceServer {
 	return &CommentServiceServer{
 		cmtInfoRepo:    cmtInfoRepo,
 		cmtContentRepo: cmtContentRepo,
+		cmtIndexRepo:   cmtIndexRepo,
 	}
 }
 
@@ -61,14 +72,32 @@ func (s *CommentServiceServer) CreateComment(ctx context.Context, req *pb.Create
 		return nil, err
 	}
 
+	// create content
 	cmtContent := &model.CommentContentModel{
-		CommentID:  cmtID,
+		Id:         cmtID,
 		Content:    req.Content,
 		DeviceType: req.DeviceType,
 		IP:         req.Ip,
 		CreatedAt:  createTime,
 	}
 	_, err = s.cmtContentRepo.CreateCommentContent(ctx, tx, cmtContent)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// create index
+	cmtIndex := &model.CommentIndexModel{
+		Id:        cmtID,
+		ObjType:   int(req.ObjType),
+		ObjId:     req.ObjId,
+		RootId:    req.RootId,
+		ParentId:  req.ParentId,
+		UserId:    req.UserId,
+		DelFlag:   int(DelFlagNormal),
+		CreatedAt: createTime,
+	}
+	_, err = s.cmtIndexRepo.CreateCommentIndex(ctx, tx, cmtIndex)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -101,15 +130,133 @@ func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *pb.Delete
 }
 
 func (s *CommentServiceServer) GetComment(ctx context.Context, req *pb.GetCommentRequest) (*pb.GetCommentReply, error) {
-	return &pb.GetCommentReply{}, nil
+	if req.GetId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status().Err()
+	}
+
+	cmtInfo, err := s.cmtInfoRepo.GetCommentInfo(ctx, req.GetId())
+	if err != nil {
+		return nil, ecode.ErrNotFound.WithDetails().Status().Err()
+	}
+	cmtContent, err := s.cmtContentRepo.GetCommentContent(ctx, req.GetId())
+	if err != nil {
+		return nil, ecode.ErrNotFound.WithDetails().Status().Err()
+	}
+
+	// convert to pb comment
+	pbComment, err := convertComment(cmtInfo, cmtContent)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetCommentReply{
+		Comment: pbComment,
+	}, nil
 }
 
 func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *pb.BatchGetCommentRequest) (*pb.BatchGetCommentReply, error) {
-	return &pb.BatchGetCommentReply{}, nil
+	if len(req.GetIds()) == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+
+	cmtInfos, err := s.cmtInfoRepo.BatchGetCommentInfo(ctx, req.GetIds())
+	if err != nil {
+		return nil, ecode.ErrNotFound.WithDetails().Status().Err()
+	}
+	cmtContents, err := s.cmtContentRepo.BatchGetCommentContent(ctx, req.GetIds())
+	if err != nil {
+		return nil, ecode.ErrNotFound.WithDetails().Status().Err()
+	}
+
+	var comments []*pb.Comment
+	for key, _ := range cmtInfos {
+		// convert to pb comment
+		pbComment, err := convertComment(cmtInfos[key], cmtContents[key])
+		if err != nil {
+			continue
+		}
+		comments = append(comments, pbComment)
+	}
+
+	return &pb.BatchGetCommentReply{
+		Comments: comments,
+	}, nil
 }
 
-func (s *CommentServiceServer) ListComment(ctx context.Context, req *pb.ListCommentRequest) (*pb.ListCommentReply, error) {
-	return &pb.ListCommentReply{}, nil
+func (s *CommentServiceServer) ListHotComment(ctx context.Context, req *pb.ListCommentRequest) (*pb.ListCommentReply, error) {
+	if req.GetObjId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+	if req.GetLastId() == 0 {
+		req.LastId = math.MaxInt64
+	}
+	if req.GetLimit() == 0 {
+		req.Limit = 10
+	}
+	cmtIDs, err := s.cmtIndexRepo.GetHotCommentIndex(ctx, req.GetObjId(), int(CommentObjTypePost), req.GetLastId(), int(req.GetLimit()))
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	var (
+		hasMore bool
+		lastId  int64
+	)
+	if len(cmtIDs) > int(req.GetLimit()) {
+		hasMore = true
+		lastId = cmtIDs[len(cmtIDs)-1]
+		cmtIDs = cmtIDs[:len(cmtIDs)-1]
+	}
+
+	cmts, err := s.BatchGetComment(ctx, &pb.BatchGetCommentRequest{Ids: cmtIDs})
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	return &pb.ListCommentReply{
+		Items:   cmts.GetComments(),
+		Count:   int64(len(cmts.GetComments())),
+		HasMore: hasMore,
+		LastId:  lastId,
+	}, nil
+}
+
+func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *pb.ListCommentRequest) (*pb.ListCommentReply, error) {
+	if req.GetObjId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+	if req.GetLastId() == 0 {
+		req.LastId = math.MaxInt64
+	}
+	if req.GetLimit() == 0 {
+		req.Limit = 10
+	}
+	cmtIDs, err := s.cmtIndexRepo.GetLatestCommentIndex(ctx, req.GetObjId(), int(CommentObjTypePost), req.GetLastId(), int(req.GetLimit()))
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	var (
+		hasMore bool
+		lastId  int64
+	)
+	if len(cmtIDs) > int(req.GetLimit()) {
+		hasMore = true
+		lastId = cmtIDs[len(cmtIDs)-1]
+		cmtIDs = cmtIDs[:len(cmtIDs)-1]
+	}
+
+	cmts, err := s.BatchGetComment(ctx, &pb.BatchGetCommentRequest{Ids: cmtIDs})
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	return &pb.ListCommentReply{
+		Items:   cmts.GetComments(),
+		Count:   int64(len(cmts.GetComments())),
+		HasMore: hasMore,
+		LastId:  lastId,
+	}, nil
 }
 
 func checkCommentParam(req *pb.CreateCommentRequest) error {
