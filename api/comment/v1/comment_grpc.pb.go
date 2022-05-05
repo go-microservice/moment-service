@@ -25,6 +25,7 @@ type CommentServiceClient interface {
 	CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*CreateCommentReply, error)
 	UpdateComment(ctx context.Context, in *UpdateCommentRequest, opts ...grpc.CallOption) (*UpdateCommentReply, error)
 	DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*DeleteCommentReply, error)
+	ReplyComment(ctx context.Context, in *ReplyCommentRequest, opts ...grpc.CallOption) (*ReplyCommentReply, error)
 	GetComment(ctx context.Context, in *GetCommentRequest, opts ...grpc.CallOption) (*GetCommentReply, error)
 	BatchGetComment(ctx context.Context, in *BatchGetCommentRequest, opts ...grpc.CallOption) (*BatchGetCommentReply, error)
 	ListHotComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error)
@@ -60,6 +61,15 @@ func (c *commentServiceClient) UpdateComment(ctx context.Context, in *UpdateComm
 func (c *commentServiceClient) DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*DeleteCommentReply, error) {
 	out := new(DeleteCommentReply)
 	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/DeleteComment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *commentServiceClient) ReplyComment(ctx context.Context, in *ReplyCommentRequest, opts ...grpc.CallOption) (*ReplyCommentReply, error) {
+	out := new(ReplyCommentReply)
+	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ReplyComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,6 +119,7 @@ type CommentServiceServer interface {
 	CreateComment(context.Context, *CreateCommentRequest) (*CreateCommentReply, error)
 	UpdateComment(context.Context, *UpdateCommentRequest) (*UpdateCommentReply, error)
 	DeleteComment(context.Context, *DeleteCommentRequest) (*DeleteCommentReply, error)
+	ReplyComment(context.Context, *ReplyCommentRequest) (*ReplyCommentReply, error)
 	GetComment(context.Context, *GetCommentRequest) (*GetCommentReply, error)
 	BatchGetComment(context.Context, *BatchGetCommentRequest) (*BatchGetCommentReply, error)
 	ListHotComment(context.Context, *ListCommentRequest) (*ListCommentReply, error)
@@ -128,6 +139,9 @@ func (UnimplementedCommentServiceServer) UpdateComment(context.Context, *UpdateC
 }
 func (UnimplementedCommentServiceServer) DeleteComment(context.Context, *DeleteCommentRequest) (*DeleteCommentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteComment not implemented")
+}
+func (UnimplementedCommentServiceServer) ReplyComment(context.Context, *ReplyCommentRequest) (*ReplyCommentReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReplyComment not implemented")
 }
 func (UnimplementedCommentServiceServer) GetComment(context.Context, *GetCommentRequest) (*GetCommentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetComment not implemented")
@@ -204,6 +218,24 @@ func _CommentService_DeleteComment_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).DeleteComment(ctx, req.(*DeleteCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CommentService_ReplyComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReplyCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommentServiceServer).ReplyComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.comment.v1.CommentService/ReplyComment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommentServiceServer).ReplyComment(ctx, req.(*ReplyCommentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -298,6 +330,10 @@ var CommentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteComment",
 			Handler:    _CommentService_DeleteComment_Handler,
+		},
+		{
+			MethodName: "ReplyComment",
+			Handler:    _CommentService_ReplyComment_Handler,
 		},
 		{
 			MethodName: "GetComment",

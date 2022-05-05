@@ -20,8 +20,8 @@ import (
 
 var (
 	_tableCommentContentName   = (&model.CommentContentModel{}).TableName()
-	_getCommentContentSQL      = "SELECT * FROM %s WHERE id = ?"
-	_batchGetCommentContentSQL = "SELECT * FROM %s WHERE id IN (%s)"
+	_getCommentContentSQL      = "SELECT * FROM %s WHERE comment_id = ?"
+	_batchGetCommentContentSQL = "SELECT * FROM %s WHERE comment_id IN (%s)"
 )
 
 var _ CommentContentRepo = (*commentContentRepo)(nil)
@@ -56,7 +56,7 @@ func (r *commentContentRepo) CreateCommentContent(ctx context.Context, db *gorm.
 		return 0, errors.Wrap(err, "[repo] create CommentContent err")
 	}
 
-	return data.Id, nil
+	return data.CommentId, nil
 }
 
 // UpdateCommentContent update item
@@ -91,7 +91,7 @@ func (r *commentContentRepo) GetCommentContent(ctx context.Context, id int64) (r
 		return
 	}
 	// write cache
-	if data.Id > 0 {
+	if data.CommentId > 0 {
 		err = r.cache.SetCommentContentCache(ctx, id, data, 5*time.Minute)
 		if err != nil {
 			return nil, err

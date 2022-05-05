@@ -11,5 +11,6 @@ var ProviderSet = wire.NewSet(
 	NewPostInfoCache,
 	NewCommentInfoCache,
 	NewCommentContentCache,
-	NewCommentIndexCache,
+	NewCommentLatestCache,
+	NewCommentHotCache,
 )

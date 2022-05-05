@@ -2,8 +2,7 @@ package model
 
 type CommentInfoModel struct {
 	ID         int64 `gorm:"column:id" json:"id"`
-	ObjType    int   `gorm:"column:obj_type" json:"obj_type"`
-	ObjId      int64 `gorm:"column:obj_id" json:"obj_id"`
+	PostId     int64 `gorm:"column:post_id" json:"post_id"`
 	Type       int   `gorm:"column:type" json:"type"`
 	UserId     int64 `gorm:"column:user_id" json:"user_id"`
 	RootId     int64 `gorm:"column:root_id" json:"root_id"`

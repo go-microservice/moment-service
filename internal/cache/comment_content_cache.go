@@ -95,7 +95,7 @@ func (c *commentContentCache) MultiGetCommentContentCache(ctx context.Context, i
 func (c *commentContentCache) MultiSetCommentContentCache(ctx context.Context, data []*model.CommentContentModel, duration time.Duration) error {
 	valMap := make(map[string]interface{})
 	for _, v := range data {
-		cacheKey := c.GetCommentContentCacheKey(v.Id)
+		cacheKey := c.GetCommentContentCacheKey(v.CommentId)
 		valMap[cacheKey] = v
 	}
 
