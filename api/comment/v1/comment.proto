@@ -35,17 +35,13 @@ message Comment {
 }
 
 message CreateCommentRequest {
-	int64 id = 1;
-	int64 post_id = 2;
-	int64 user_id = 3;
-	string content = 4;
-	int64 root_id = 5;
-	int64 parent_id = 6;
-	int32 like_count = 7;
-	int32 reply_count = 8;
-	int32 del_flag = 9;
-	string device_type = 10;
-	string ip = 11;
+	int64 post_id = 1;
+	int64 user_id = 2;
+	string content = 3;
+	int64 root_id = 4;
+	int64 parent_id = 5;
+	string device_type = 6;
+	string ip = 7;
 }
 message CreateCommentReply {
 	Comment comment = 1;
@@ -67,14 +63,11 @@ message ReplyCommentRequest {
 	string content = 3;
 	int64 root_id = 4;
 	int64 parent_id = 5;
-	int32 like_count = 6;
-	int32 reply_count = 7;
-	int32 del_flag = 8;
-	string device_type = 9;
-	string ip = 10;
+	string device_type = 6;
+	string ip = 7;
 }
 message ReplyCommentReply {
-
+	Comment comment = 1;
 }
 
 message GetCommentRequest {

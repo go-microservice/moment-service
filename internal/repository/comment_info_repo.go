@@ -21,7 +21,7 @@ import (
 var (
 	_tableCommentInfoName   = (&model.CommentInfoModel{}).TableName()
 	_getCommentInfoSQL      = "SELECT * FROM %s WHERE id = ?"
-	_batchGetCommentInfoSQL = "SELECT * FROM %s WHERE id IN (%s)"
+	_batchGetCommentInfoSQL = "SELECT * FROM %s WHERE id IN (%s) and del_flag=0"
 )
 
 var _ CommentInfoRepo = (*commentInfoRepo)(nil)
@@ -30,6 +30,7 @@ var _ CommentInfoRepo = (*commentInfoRepo)(nil)
 type CommentInfoRepo interface {
 	CreateCommentInfo(ctx context.Context, db *gorm.DB, data *model.CommentInfoModel) (id int64, err error)
 	UpdateCommentInfo(ctx context.Context, id int64, data *model.CommentInfoModel) error
+	IncrReplyCount(ctx context.Context, db *gorm.DB, id int64) error
 	GetCommentInfo(ctx context.Context, id int64) (ret *model.CommentInfoModel, err error)
 	BatchGetCommentInfo(ctx context.Context, ids []int64) (ret []*model.CommentInfoModel, err error)
 }
@@ -74,6 +75,22 @@ func (r *commentInfoRepo) UpdateCommentInfo(ctx context.Context, id int64, data 
 	return nil
 }
 
+func (r *commentInfoRepo) IncrReplyCount(ctx context.Context, db *gorm.DB, id int64) error {
+	err := db.Model(&model.CommentInfoModel{}).Where("id = ?", id).
+		UpdateColumn("reply_count", gorm.Expr("reply_count + ?", 1)).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+	// delete cache
+	err = r.cache.DelCommentInfoCache(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetCommentInfo get a record
 func (r *commentInfoRepo) GetCommentInfo(ctx context.Context, id int64) (ret *model.CommentInfoModel, err error) {
 	// read cache
@@ -103,14 +120,13 @@ func (r *commentInfoRepo) GetCommentInfo(ctx context.Context, id int64) (ret *mo
 // BatchGetCommentInfo batch get items
 func (r *commentInfoRepo) BatchGetCommentInfo(ctx context.Context, ids []int64) (ret []*model.CommentInfoModel, err error) {
 	// read cache
-	idsStr := cast.ToStringSlice(ids)
 	itemMap, err := r.cache.MultiGetCommentInfoCache(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
 	var missedID []int64
 	for _, v := range ids {
-		item, ok := itemMap[cast.ToString(v)]
+		item, ok := itemMap[v]
 		if !ok {
 			missedID = append(missedID, v)
 			continue
@@ -120,7 +136,8 @@ func (r *commentInfoRepo) BatchGetCommentInfo(ctx context.Context, ids []int64) 
 	// get missed data
 	if len(missedID) > 0 {
 		var missedData []*model.CommentInfoModel
-		_sql := fmt.Sprintf(_batchGetCommentInfoSQL, _tableCommentInfoName, strings.Join(idsStr, ","))
+		missIDStr := strings.Join(cast.ToStringSlice(missedID), ",")
+		_sql := fmt.Sprintf(_batchGetCommentInfoSQL, _tableCommentInfoName, missIDStr)
 		err = r.db.WithContext(ctx).Raw(_sql).Scan(&missedData).Error
 		if err != nil {
 			// you can degrade to ignore error

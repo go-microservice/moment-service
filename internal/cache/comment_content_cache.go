@@ -24,7 +24,7 @@ const (
 type CommentContentCache interface {
 	SetCommentContentCache(ctx context.Context, id int64, data *model.CommentContentModel, duration time.Duration) error
 	GetCommentContentCache(ctx context.Context, id int64) (data *model.CommentContentModel, err error)
-	MultiGetCommentContentCache(ctx context.Context, ids []int64) (map[string]*model.CommentContentModel, error)
+	MultiGetCommentContentCache(ctx context.Context, ids []int64) (map[int64]*model.CommentContentModel, error)
 	MultiSetCommentContentCache(ctx context.Context, data []*model.CommentContentModel, duration time.Duration) error
 	DelCommentContentCache(ctx context.Context, id int64) error
 }
@@ -75,7 +75,7 @@ func (c *commentContentCache) GetCommentContentCache(ctx context.Context, id int
 }
 
 // MultiGetCommentContentCache batch get cache
-func (c *commentContentCache) MultiGetCommentContentCache(ctx context.Context, ids []int64) (map[string]*model.CommentContentModel, error) {
+func (c *commentContentCache) MultiGetCommentContentCache(ctx context.Context, ids []int64) (map[int64]*model.CommentContentModel, error) {
 	var keys []string
 	for _, v := range ids {
 		cacheKey := c.GetCommentContentCacheKey(v)
@@ -83,10 +83,18 @@ func (c *commentContentCache) MultiGetCommentContentCache(ctx context.Context, i
 	}
 
 	// NOTE: 需要在这里make实例化，如果在返回参数里直接定义会报 nil map
-	retMap := make(map[string]*model.CommentContentModel)
-	err := c.cache.MultiGet(ctx, keys, retMap)
+	cacheMap := make(map[string]*model.CommentContentModel)
+	err := c.cache.MultiGet(ctx, keys, cacheMap)
 	if err != nil {
 		return nil, err
+	}
+	retMap := make(map[int64]*model.CommentContentModel)
+	for _, v := range ids {
+		cacheKey := c.GetCommentContentCacheKey(v)
+		val, ok := cacheMap[cacheKey]
+		if ok {
+			retMap[v] = val
+		}
 	}
 	return retMap, nil
 }

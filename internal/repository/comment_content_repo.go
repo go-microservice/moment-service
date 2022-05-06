@@ -31,7 +31,7 @@ type CommentContentRepo interface {
 	CreateCommentContent(ctx context.Context, db *gorm.DB, data *model.CommentContentModel) (id int64, err error)
 	UpdateCommentContent(ctx context.Context, id int64, data *model.CommentContentModel) error
 	GetCommentContent(ctx context.Context, id int64) (ret *model.CommentContentModel, err error)
-	BatchGetCommentContent(ctx context.Context, ids []int64) (ret []*model.CommentContentModel, err error)
+	BatchGetCommentContent(ctx context.Context, ids []int64) (ret map[int64]*model.CommentContentModel, err error)
 }
 
 type commentContentRepo struct {
@@ -101,22 +101,26 @@ func (r *commentContentRepo) GetCommentContent(ctx context.Context, id int64) (r
 }
 
 // BatchGetCommentContent batch get items
-func (r *commentContentRepo) BatchGetCommentContent(ctx context.Context, ids []int64) (ret []*model.CommentContentModel, err error) {
+func (r *commentContentRepo) BatchGetCommentContent(ctx context.Context, ids []int64) (ret map[int64]*model.CommentContentModel, err error) {
 	// read cache
 	idsStr := cast.ToStringSlice(ids)
 	itemMap, err := r.cache.MultiGetCommentContentCache(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
-	var missedID []int64
+	var (
+		missedID []int64
+		retMap   = make(map[int64]*model.CommentContentModel)
+	)
 	for _, v := range ids {
-		item, ok := itemMap[cast.ToString(v)]
+		item, ok := itemMap[v]
 		if !ok {
 			missedID = append(missedID, v)
 			continue
 		}
-		ret = append(ret, item)
+		retMap[v] = item
 	}
+
 	// get missed data
 	if len(missedID) > 0 {
 		var missedData []*model.CommentContentModel
@@ -127,7 +131,9 @@ func (r *commentContentRepo) BatchGetCommentContent(ctx context.Context, ids []i
 			return nil, err
 		}
 		if len(missedData) > 0 {
-			ret = append(ret, missedData...)
+			for _, val := range missedData {
+				retMap[val.CommentId] = val
+			}
 			err = r.cache.MultiSetCommentContentCache(ctx, missedData, 5*time.Minute)
 			if err != nil {
 				// you can degrade to ignore error
@@ -135,5 +141,5 @@ func (r *commentContentRepo) BatchGetCommentContent(ctx context.Context, ids []i
 			}
 		}
 	}
-	return ret, nil
+	return retMap, nil
 }
