@@ -2,13 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"sync"
 	"time"
-
-	"gorm.io/gorm"
 
 	"github.com/go-eagle/eagle/pkg/log"
 
@@ -19,11 +16,13 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-type ObjType int
+type CommentType int
 
 const (
-	// post
-	CommentObjTypePost ObjType = 1
+	// CommentTypeText text comment type
+	CommentTypeText CommentType = 1
+	// CommentTypeImage image comment type
+	CommentTypeImage CommentType = 2
 )
 
 var (
@@ -159,6 +158,47 @@ func (s *CommentServiceServer) UpdateComment(ctx context.Context, req *pb.Update
 }
 
 func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *pb.DeleteCommentRequest) (*pb.DeleteCommentReply, error) {
+	if req.GetId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+
+	commentID := req.GetId()
+
+	// check comment if exist
+	_, err := s.GetComment(ctx, &pb.GetCommentRequest{Id: commentID})
+	if err != nil {
+		return nil, err
+	}
+
+	// start transaction
+	tx := model.GetDB().Begin()
+	if tx == nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	err = s.cmtInfoRepo.UpdateDelFlag(ctx, tx, commentID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = s.cmtLatestRepo.UpdateDelFlag(ctx, tx, commentID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = s.cmtHotRepo.UpdateDelFlag(ctx, tx, commentID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// commit transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
 	return &pb.DeleteCommentReply{}, nil
 }
 
@@ -244,16 +284,19 @@ func (s *CommentServiceServer) ReplyComment(ctx context.Context, req *pb.ReplyCo
 
 func (s *CommentServiceServer) GetComment(ctx context.Context, req *pb.GetCommentRequest) (*pb.GetCommentReply, error) {
 	if req.GetId() == 0 {
-		return nil, ecode.ErrInvalidArgument.WithDetails().Status().Err()
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
 
 	cmtInfo, err := s.cmtInfoRepo.GetCommentInfo(ctx, req.GetId())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ecode.ErrNotFound.WithDetails().Status().Err()
+	if err != nil {
+		return nil, err
+	}
+	if cmtInfo == nil || cmtInfo.ID == 0 {
+		return nil, ecode.ErrNotFound.WithDetails().Status(req).Err()
 	}
 	cmtContent, err := s.cmtContentRepo.GetCommentContent(ctx, req.GetId())
 	if err != nil {
-		return nil, ecode.ErrNotFound.WithDetails().Status().Err()
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
 	// convert to pb comment

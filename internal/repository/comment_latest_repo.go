@@ -29,6 +29,7 @@ var _ CommentLatestRepo = (*commentLatestRepo)(nil)
 type CommentLatestRepo interface {
 	CreateCommentLatest(ctx context.Context, db *gorm.DB, data *model.CommentLatestModel) (id int64, err error)
 	UpdateCommentLatest(ctx context.Context, id int64, data *model.CommentLatestModel) error
+	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	GetCommentLatest(ctx context.Context, id int64) (ret *model.CommentLatestModel, err error)
 	ListCommentLatest(ctx context.Context, postID int64, lastID int64, limit int) (ret []int64, err error)
 }
@@ -70,6 +71,22 @@ func (r *commentLatestRepo) UpdateCommentLatest(ctx context.Context, id int64, d
 	}
 	// delete cache
 	_ = r.cache.DelCommentLatestCache(ctx, id)
+	return nil
+}
+
+func (r *commentLatestRepo) UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error {
+	err := db.Model(&model.CommentLatestModel{}).Where("comment_id = ?", id).
+		UpdateColumn("del_flag", delFlag).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+	// delete cache
+	err = r.cache.DelCommentLatestCache(ctx, id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

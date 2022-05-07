@@ -30,6 +30,7 @@ var _ PostInfoRepo = (*postInfoRepo)(nil)
 type PostInfoRepo interface {
 	CreatePostInfo(ctx context.Context, db *gorm.DB, data *model.PostInfoModel) (id int64, err error)
 	UpdatePostInfo(ctx context.Context, id int64, data *model.PostInfoModel) error
+	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	IncrCommentCount(ctx context.Context, db *gorm.DB, id int64) error
 	GetPostInfo(ctx context.Context, id int64) (ret *model.PostInfoModel, err error)
 	BatchGetPostInfo(ctx context.Context, ids []int64) (ret []*model.PostInfoModel, err error)
@@ -72,6 +73,22 @@ func (r *postInfoRepo) UpdatePostInfo(ctx context.Context, id int64, data *model
 	}
 	// delete cache
 	_ = r.cache.DelPostInfoCache(ctx, id)
+	return nil
+}
+
+func (r *postInfoRepo) UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error {
+	err := db.Model(&model.PostInfoModel{}).Where("id = ?", id).
+		UpdateColumn("del_flag", delFlag).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+	// delete cache
+	err = r.cache.DelPostInfoCache(ctx, id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

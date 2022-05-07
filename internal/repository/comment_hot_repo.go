@@ -28,6 +28,7 @@ var _ CommentHotRepo = (*commentHotRepo)(nil)
 type CommentHotRepo interface {
 	CreateCommentHot(ctx context.Context, db *gorm.DB, data *model.CommentHotModel) (id int64, err error)
 	UpdateCommentHot(ctx context.Context, id int64, data *model.CommentHotModel) error
+	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	GetCommentHot(ctx context.Context, id int64) (ret *model.CommentHotModel, err error)
 	ListCommentHot(ctx context.Context, postID int64, lastID int64, limit int) (ret []int64, err error)
 }
@@ -69,6 +70,22 @@ func (r *commentHotRepo) UpdateCommentHot(ctx context.Context, id int64, data *m
 	}
 	// delete cache
 	_ = r.cache.DelCommentHotCache(ctx, id)
+	return nil
+}
+
+func (r *commentHotRepo) UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error {
+	err := db.Model(&model.CommentHotModel{}).Where("comment_id = ?", id).
+		UpdateColumn("del_flag", delFlag).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+	// delete cache
+	err = r.cache.DelCommentHotCache(ctx, id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

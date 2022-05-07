@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
@@ -27,6 +28,7 @@ var _ PostHotRepo = (*postHotRepo)(nil)
 type PostHotRepo interface {
 	CreatePostHot(ctx context.Context, db *gorm.DB, data *model.PostHotModel) (id int64, err error)
 	UpdatePostHot(ctx context.Context, id int64, data *model.PostHotModel) error
+	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	GetPostHot(ctx context.Context, id int64) (ret *model.PostHotModel, err error)
 	BatchGetPostHot(ctx context.Context, ids []int64) (ret []*model.PostHotModel, err error)
 	GetHotPostList(ctx context.Context, lastId int64, limit int32) (ret []*model.PostHotModel, err error)
@@ -65,6 +67,17 @@ func (r *postHotRepo) UpdatePostHot(ctx context.Context, id int64, data *model.P
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (r *postHotRepo) UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error {
+	err := db.WithContext(ctx).Model(&model.PostHotModel{}).Where("post_id = ?", id).
+		UpdateColumn("del_flag", delFlag).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

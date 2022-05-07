@@ -30,6 +30,7 @@ var _ CommentInfoRepo = (*commentInfoRepo)(nil)
 type CommentInfoRepo interface {
 	CreateCommentInfo(ctx context.Context, db *gorm.DB, data *model.CommentInfoModel) (id int64, err error)
 	UpdateCommentInfo(ctx context.Context, id int64, data *model.CommentInfoModel) error
+	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	IncrReplyCount(ctx context.Context, db *gorm.DB, id int64) error
 	GetCommentInfo(ctx context.Context, id int64) (ret *model.CommentInfoModel, err error)
 	BatchGetCommentInfo(ctx context.Context, ids []int64) (ret []*model.CommentInfoModel, err error)
@@ -72,6 +73,22 @@ func (r *commentInfoRepo) UpdateCommentInfo(ctx context.Context, id int64, data 
 	}
 	// delete cache
 	_ = r.cache.DelCommentInfoCache(ctx, id)
+	return nil
+}
+
+func (r *commentInfoRepo) UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error {
+	err := db.Model(&model.CommentInfoModel{}).Where("id = ?", id).
+		UpdateColumn("del_flag", delFlag).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+	// delete cache
+	err = r.cache.DelCommentInfoCache(ctx, id)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

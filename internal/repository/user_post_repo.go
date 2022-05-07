@@ -5,6 +5,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel"
@@ -27,6 +28,7 @@ var _ UserPostRepo = (*userPostRepo)(nil)
 type UserPostRepo interface {
 	CreateUserPost(ctx context.Context, db *gorm.DB, data *model.UserPostModel) (id int64, err error)
 	UpdateUserPost(ctx context.Context, id int64, data *model.UserPostModel) error
+	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	GetUserPost(ctx context.Context, id int64) (ret *model.UserPostModel, err error)
 	BatchGetUserPost(ctx context.Context, ids []int64) (ret []*model.UserPostModel, err error)
 	GetUserPostByUserId(ctx context.Context, userId int64, lastId int64, limit int32) (ret []*model.UserPostModel, err error)
@@ -65,6 +67,17 @@ func (r *userPostRepo) UpdateUserPost(ctx context.Context, id int64, data *model
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (r *userPostRepo) UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error {
+	err := db.WithContext(ctx).Model(&model.UserPostModel{}).Where("post_id = ?", id).
+		UpdateColumn("del_flag", delFlag).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

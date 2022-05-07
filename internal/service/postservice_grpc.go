@@ -30,7 +30,7 @@ const (
 
 	DelFlagNormal  DeleteType = 0 // 正常
 	DelFlagByUser  DeleteType = 1 // 用户删除
-	delFlagByAdmin DeleteType = 2 // 管理员删除
+	DelFlagByAdmin DeleteType = 2 // 管理员删除
 
 	VisibleAll      VisibleType = 0 // 公开
 	VisibleOnlySelf VisibleType = 1 // 仅自己可见
@@ -237,6 +237,52 @@ func (s *PostServiceServer) UpdatePost(ctx context.Context, req *pb.UpdatePostRe
 }
 
 func (s *PostServiceServer) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostReply, error) {
+	if req.GetId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+
+	postID := req.GetId()
+
+	// check comment if exist
+	_, err := s.GetPost(ctx, &pb.GetPostRequest{Id: postID})
+	if err != nil {
+		return nil, err
+	}
+
+	// start transaction
+	tx := model.GetDB().Begin()
+	if tx == nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	err = s.postRepo.UpdateDelFlag(ctx, tx, postID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = s.latestRepo.UpdateDelFlag(ctx, tx, postID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = s.hotRepo.UpdateDelFlag(ctx, tx, postID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = s.userPostRepo.UpdateDelFlag(ctx, tx, postID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// commit transaction
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
 	return &pb.DeletePostReply{}, nil
 }
 
@@ -249,6 +295,10 @@ func (s *PostServiceServer) GetPost(ctx context.Context, req *pb.GetPostRequest)
 	post, err := s.postRepo.GetPostInfo(ctx, req.GetId())
 	if err != nil {
 		return nil, err
+	}
+	// check if post is exist
+	if post == nil || post.ID == 0 {
+		return nil, ecode.ErrNotFound.WithDetails().Status(req).Err()
 	}
 	pbPost, err := convertPost(post)
 	if err != nil {
