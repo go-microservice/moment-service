@@ -13,8 +13,12 @@ service CommentService {
 	rpc ReplyComment (ReplyCommentRequest) returns (ReplyCommentReply);
 	rpc GetComment (GetCommentRequest) returns (GetCommentReply);
 	rpc BatchGetComment(BatchGetCommentRequest) returns (BatchGetCommentReply);
+	// 热门评论列表
 	rpc ListHotComment (ListCommentRequest) returns (ListCommentReply);
+	// 最新评论列表
 	rpc ListLatestComment (ListCommentRequest) returns (ListCommentReply);
+	// 评论回复列表
+	rpc ListReplyComment (ListReplyCommentRequest) returns (ListReplyCommentReply);
 }
 
 message Comment {
@@ -90,6 +94,18 @@ message ListCommentRequest {
 	int32 limit = 3;
 }
 message ListCommentReply {
+	repeated Comment items = 1;
+	int64 count = 2;
+	bool has_more = 3;
+	int64 last_id = 4;
+}
+
+message ListReplyCommentRequest {
+	int64 comment_id = 1;
+	int64 last_id = 2;
+	int32 limit = 3;
+}
+message ListReplyCommentReply {
 	repeated Comment items = 1;
 	int64 count = 2;
 	bool has_more = 3;

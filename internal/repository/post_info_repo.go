@@ -32,6 +32,7 @@ type PostInfoRepo interface {
 	UpdatePostInfo(ctx context.Context, id int64, data *model.PostInfoModel) error
 	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	IncrCommentCount(ctx context.Context, db *gorm.DB, id int64) error
+	DecrCommentCount(ctx context.Context, db *gorm.DB, id int64) error
 	GetPostInfo(ctx context.Context, id int64) (ret *model.PostInfoModel, err error)
 	BatchGetPostInfo(ctx context.Context, ids []int64) (ret []*model.PostInfoModel, err error)
 }
@@ -95,6 +96,22 @@ func (r *postInfoRepo) UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64,
 func (r *postInfoRepo) IncrCommentCount(ctx context.Context, db *gorm.DB, id int64) error {
 	err := db.Model(&model.PostInfoModel{}).Where("id = ?", id).
 		UpdateColumn("comment_count", gorm.Expr("comment_count + ?", 1)).
+		UpdateColumn("updated_at", time.Now().Unix()).Error
+	if err != nil {
+		return err
+	}
+	// delete cache
+	err = r.cache.DelPostInfoCache(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *postInfoRepo) DecrCommentCount(ctx context.Context, db *gorm.DB, id int64) error {
+	err := db.Model(&model.PostInfoModel{}).Where("id = ?", id).
+		UpdateColumn("comment_count", gorm.Expr("comment_count + ?", -1)).
 		UpdateColumn("updated_at", time.Now().Unix()).Error
 	if err != nil {
 		return err

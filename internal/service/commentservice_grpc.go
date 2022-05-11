@@ -165,7 +165,7 @@ func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *pb.Delete
 	commentID := req.GetId()
 
 	// check comment if exist
-	_, err := s.GetComment(ctx, &pb.GetCommentRequest{Id: commentID})
+	cmt, err := s.GetComment(ctx, &pb.GetCommentRequest{Id: commentID})
 	if err != nil {
 		return nil, err
 	}
@@ -189,6 +189,12 @@ func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *pb.Delete
 	}
 
 	err = s.cmtHotRepo.UpdateDelFlag(ctx, tx, commentID, int(DelFlagByUser))
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = s.postRepo.DecrCommentCount(ctx, tx, cmt.GetComment().PostId)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -245,6 +251,22 @@ func (s *CommentServiceServer) ReplyComment(ctx context.Context, req *pb.ReplyCo
 		CreatedAt:  createTime,
 	}
 	_, err = s.cmtContentRepo.CreateCommentContent(ctx, tx, cmtContent)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// create latest for reply list
+	cmtLatest := &model.CommentLatestModel{
+		CommentId: cmtID,
+		PostID:    comment.GetComment().GetPostId(),
+		RootID:    req.GetCommentId(),
+		ParentID:  req.GetParentId(),
+		UserID:    req.GetUserId(),
+		DelFlag:   int(DelFlagNormal),
+		CreatedAt: createTime,
+	}
+	_, err = s.cmtLatestRepo.CreateCommentLatest(ctx, tx, cmtLatest)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -457,6 +479,44 @@ func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *pb.Li
 	}
 
 	return &pb.ListCommentReply{
+		Items:   cmts.GetComments(),
+		Count:   int64(len(cmts.GetComments())),
+		HasMore: hasMore,
+		LastId:  lastId,
+	}, nil
+}
+
+func (s *CommentServiceServer) ListReplyComment(ctx context.Context, req *pb.ListReplyCommentRequest) (*pb.ListReplyCommentReply, error) {
+	if req.GetCommentId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+	if req.GetLastId() == 0 {
+		req.LastId = math.MaxInt64
+	}
+	if req.GetLimit() == 0 {
+		req.Limit = 10
+	}
+	cmtIDs, err := s.cmtLatestRepo.ListReplyComment(ctx, req.GetCommentId(), req.GetLastId(), int(req.GetLimit())+1)
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	var (
+		hasMore bool
+		lastId  int64
+	)
+	if len(cmtIDs) > int(req.GetLimit()) {
+		hasMore = true
+		lastId = cmtIDs[len(cmtIDs)-1]
+		cmtIDs = cmtIDs[:len(cmtIDs)-1]
+	}
+
+	cmts, err := s.BatchGetComment(ctx, &pb.BatchGetCommentRequest{Ids: cmtIDs})
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	return &pb.ListReplyCommentReply{
 		Items:   cmts.GetComments(),
 		Count:   int64(len(cmts.GetComments())),
 		HasMore: hasMore,

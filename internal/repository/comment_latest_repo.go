@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	_tableCommentLatestName   = (&model.CommentLatestModel{}).TableName()
-	_getCommentLatestSQL      = "SELECT * FROM %s WHERE id = ?"
-	_batchGetCommentLatestSQL = "SELECT * FROM %s WHERE id IN (%s)"
-	_listCommentLatestSQL     = "SELECT comment_id FROM %s WHERE del_flag = 0 AND post_id = ? and root_id=0 and comment_id <= ? ORDER BY comment_id DESC LIMIT ?"
+	_tableCommentLatestName = (&model.CommentLatestModel{}).TableName()
+	_getCommentLatestSQL    = "SELECT * FROM %s WHERE id = ?"
+	_listCommentLatestSQL   = "SELECT comment_id FROM %s WHERE del_flag = 0 AND post_id=? AND root_id=0 and comment_id <= ? ORDER BY comment_id DESC LIMIT ?"
+	_listReplySQL           = "SELECT comment_id FROM %s WHERE del_flag = 0 AND root_id=? and comment_id <= ? ORDER BY comment_id DESC LIMIT ?"
 )
 
 var _ CommentLatestRepo = (*commentLatestRepo)(nil)
@@ -32,6 +32,8 @@ type CommentLatestRepo interface {
 	UpdateDelFlag(ctx context.Context, db *gorm.DB, id int64, delFlag int) error
 	GetCommentLatest(ctx context.Context, id int64) (ret *model.CommentLatestModel, err error)
 	ListCommentLatest(ctx context.Context, postID int64, lastID int64, limit int) (ret []int64, err error)
+	// 获取评论的回复列表
+	ListReplyComment(ctx context.Context, commentID int64, lastID int64, limit int) (ret []int64, err error)
 }
 
 type commentLatestRepo struct {
@@ -131,6 +133,28 @@ func (r *commentLatestRepo) ListCommentLatest(ctx context.Context, postID int64,
 
 	_sql := fmt.Sprintf(_listCommentLatestSQL, _tableCommentLatestName)
 	err = r.db.WithContext(ctx).Raw(_sql, postID, lastID, limit).Scan(&items).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(items) == 0 {
+		return
+	}
+
+	for _, item := range items {
+		ret = append(ret, item.CommentId)
+	}
+
+	return ret, nil
+}
+
+func (r *commentLatestRepo) ListReplyComment(ctx context.Context, commentID int64, lastID int64, limit int) (ret []int64, err error) {
+	var (
+		items []*model.CommentLatestModel
+	)
+
+	_sql := fmt.Sprintf(_listReplySQL, _tableCommentLatestName)
+	err = r.db.WithContext(ctx).Raw(_sql, commentID, lastID, limit).Scan(&items).Error
 	if err != nil {
 		return nil, err
 	}

@@ -28,8 +28,12 @@ type CommentServiceClient interface {
 	ReplyComment(ctx context.Context, in *ReplyCommentRequest, opts ...grpc.CallOption) (*ReplyCommentReply, error)
 	GetComment(ctx context.Context, in *GetCommentRequest, opts ...grpc.CallOption) (*GetCommentReply, error)
 	BatchGetComment(ctx context.Context, in *BatchGetCommentRequest, opts ...grpc.CallOption) (*BatchGetCommentReply, error)
+	// 热门评论列表
 	ListHotComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error)
+	// 最新评论列表
 	ListLatestComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error)
+	// 评论回复列表
+	ListReplyComment(ctx context.Context, in *ListReplyCommentRequest, opts ...grpc.CallOption) (*ListReplyCommentReply, error)
 }
 
 type commentServiceClient struct {
@@ -112,6 +116,15 @@ func (c *commentServiceClient) ListLatestComment(ctx context.Context, in *ListCo
 	return out, nil
 }
 
+func (c *commentServiceClient) ListReplyComment(ctx context.Context, in *ListReplyCommentRequest, opts ...grpc.CallOption) (*ListReplyCommentReply, error) {
+	out := new(ListReplyCommentReply)
+	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ListReplyComment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CommentServiceServer is the server API for CommentService service.
 // All implementations must embed UnimplementedCommentServiceServer
 // for forward compatibility
@@ -122,8 +135,12 @@ type CommentServiceServer interface {
 	ReplyComment(context.Context, *ReplyCommentRequest) (*ReplyCommentReply, error)
 	GetComment(context.Context, *GetCommentRequest) (*GetCommentReply, error)
 	BatchGetComment(context.Context, *BatchGetCommentRequest) (*BatchGetCommentReply, error)
+	// 热门评论列表
 	ListHotComment(context.Context, *ListCommentRequest) (*ListCommentReply, error)
+	// 最新评论列表
 	ListLatestComment(context.Context, *ListCommentRequest) (*ListCommentReply, error)
+	// 评论回复列表
+	ListReplyComment(context.Context, *ListReplyCommentRequest) (*ListReplyCommentReply, error)
 	mustEmbedUnimplementedCommentServiceServer()
 }
 
@@ -154,6 +171,9 @@ func (UnimplementedCommentServiceServer) ListHotComment(context.Context, *ListCo
 }
 func (UnimplementedCommentServiceServer) ListLatestComment(context.Context, *ListCommentRequest) (*ListCommentReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListLatestComment not implemented")
+}
+func (UnimplementedCommentServiceServer) ListReplyComment(context.Context, *ListReplyCommentRequest) (*ListReplyCommentReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListReplyComment not implemented")
 }
 func (UnimplementedCommentServiceServer) mustEmbedUnimplementedCommentServiceServer() {}
 
@@ -312,6 +332,24 @@ func _CommentService_ListLatestComment_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CommentService_ListReplyComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReplyCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommentServiceServer).ListReplyComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.comment.v1.CommentService/ListReplyComment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommentServiceServer).ListReplyComment(ctx, req.(*ListReplyCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CommentService_ServiceDesc is the grpc.ServiceDesc for CommentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -350,6 +388,10 @@ var CommentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListLatestComment",
 			Handler:    _CommentService_ListLatestComment_Handler,
+		},
+		{
+			MethodName: "ListReplyComment",
+			Handler:    _CommentService_ListReplyComment_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
