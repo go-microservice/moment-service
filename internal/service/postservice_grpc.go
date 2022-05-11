@@ -3,9 +3,13 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/go-eagle/eagle/pkg/log"
 
 	"github.com/go-eagle/eagle/pkg/errcode"
 	"github.com/jinzhu/copier"
@@ -320,13 +324,59 @@ func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *pb.BatchGetPo
 	if err != nil {
 		return nil, err
 	}
-	pbPosts := make([]*pb.Post, 0, len(posts))
-	for _, post := range posts {
-		pbPost, err := convertPost(post)
-		if err != nil {
-			return nil, err
+
+	var (
+		pbPosts []*pb.Post
+		m       sync.Map
+		mu      sync.Mutex
+	)
+
+	wg := sync.WaitGroup{}
+	errChan := make(chan error, 1)
+	finished := make(chan bool, 1)
+
+	go func() {
+		select {
+		case <-finished:
+			return
+		case err := <-errChan:
+			if err != nil {
+				// NOTE: if need, record log to file
+			}
+		case <-time.After(3 * time.Second):
+			log.Warn(fmt.Errorf("list users timeout after 3 seconds"))
+			return
 		}
-		pbPosts = append(pbPosts, pbPost)
+	}()
+
+	for _, post := range posts {
+		wg.Add(1)
+		go func(info *model.PostInfoModel) {
+			defer func() {
+				wg.Done()
+			}()
+
+			mu.Lock()
+			defer mu.Unlock()
+
+			pbPost, err := convertPost(info)
+			if err != nil {
+				return
+			}
+
+			m.Store(info.ID, pbPost)
+		}(post)
+
+	}
+
+	wg.Wait()
+	close(errChan)
+	close(finished)
+
+	// 保证顺序
+	for _, uid := range req.GetIds() {
+		post, _ := m.Load(uid)
+		pbPosts = append(pbPosts, post.(*pb.Post))
 	}
 
 	return &pb.BatchGetPostReply{
