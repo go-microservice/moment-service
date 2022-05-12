@@ -8,7 +8,11 @@ import (
 var Svc Service
 
 // ProviderSet is service providers.
-var ProviderSet = wire.NewSet(NewPostServiceServer, NewCommentServiceServer)
+var ProviderSet = wire.NewSet(
+	NewPostServiceServer,
+	NewCommentServiceServer,
+	NewLikeServiceServer,
+)
 
 // Service define all service
 type Service interface {
