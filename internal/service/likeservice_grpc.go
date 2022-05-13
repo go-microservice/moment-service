@@ -60,6 +60,35 @@ func (s *LikeServiceServer) CreateLike(ctx context.Context, req *pb.CreateLikeRe
 		return nil, err
 	}
 
+	// check object if exist
+	switch LikeType(req.GetObjType()) {
+	case LikeTypePost:
+		post, err := s.postRepo.GetPostInfo(ctx, req.GetObjId())
+		if err != nil {
+			return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+		}
+		if post == nil || post.ID == 0 {
+			return nil, ecode.ErrNotFound.WithDetails().Status(req).Err()
+		}
+	case LikeTypeComment:
+		cmt, err := s.cmtInfoRepo.GetCommentInfo(ctx, req.GetObjId())
+		if err != nil {
+			return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+		}
+		if cmt == nil || cmt.ID == 0 {
+			return nil, ecode.ErrNotFound.WithDetails().Status(req).Err()
+		}
+	}
+
+	// check if liked
+	userLike, err := s.likeRepo.GetUserLike(ctx, req.GetUserId(), req.GetObjId(), req.GetObjType())
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+	if hasLiked(userLike) {
+		return &pb.CreateLikeReply{}, ecode.ErrSuccess.WithDetails().Status(req).Err()
+	}
+
 	// start transaction
 	tx := model.GetDB().Begin()
 	if tx == nil {
@@ -74,7 +103,7 @@ func (s *LikeServiceServer) CreateLike(ctx context.Context, req *pb.CreateLikeRe
 		Status:    int(LikeStatusLiked),
 		CreatedAt: time.Now().Unix(),
 	}
-	_, err := s.likeRepo.CreateUserLike(ctx, tx, likeData)
+	_, err = s.likeRepo.CreateUserLike(ctx, tx, likeData)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -132,8 +161,6 @@ func (s *LikeServiceServer) DeleteLike(ctx context.Context, req *pb.DeleteLikeRe
 		}
 	}
 
-	// check if liked
-
 	// start transaction
 	tx := model.GetDB().Begin()
 	if tx == nil {
@@ -176,6 +203,18 @@ func (s *LikeServiceServer) DeleteLike(ctx context.Context, req *pb.DeleteLikeRe
 	}
 	return &pb.DeleteLikeReply{}, nil
 }
+
+func hasLiked(data *model.UserLikeModel) bool {
+	if data == nil {
+		return false
+	}
+	if data.ObjID > 0 && LikeStatus(data.Status) == LikeStatusLiked {
+		return true
+	}
+
+	return false
+}
+
 func (s *LikeServiceServer) GetLike(ctx context.Context, req *pb.GetLikeRequest) (*pb.GetLikeReply, error) {
 	return &pb.GetLikeReply{}, nil
 }

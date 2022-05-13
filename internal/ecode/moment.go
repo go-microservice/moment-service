@@ -8,6 +8,7 @@ import (
 //nolint: golint
 var (
 	// common errors
+	ErrSuccess         = errcode.New(codes.OK, "Ok")
 	ErrInvalidArgument = errcode.New(codes.InvalidArgument, "Invalid argument")
 	ErrInternalError   = errcode.New(codes.Internal, "Internal error")
 	ErrAccessDenied    = errcode.New(codes.PermissionDenied, "Access denied")

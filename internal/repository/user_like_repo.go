@@ -20,8 +20,8 @@ import (
 
 var (
 	_tableUserLikeName   = (&model.UserLikeModel{}).TableName()
-	_createSQL           = "INSERT INTO %s SET obj_type=?, obj_id=?, user_id=?, status=1, created_at=? ON duplicate key update status=?"
-	_getUserLikeSQL      = "SELECT * FROM %s WHERE id = ?"
+	_createSQL           = "INSERT IGNORE INTO %s SET obj_type=?, obj_id=?, user_id=?, status=1, created_at=? ON duplicate key update status=?"
+	_getUserLikeSQL      = "SELECT user_id, obj_type, obj_id, status FROM %s WHERE user_id=? AND obj_type=? AND obj_id=?"
 	_batchGetUserLikeSQL = "SELECT * FROM %s WHERE id IN (%s)"
 )
 
@@ -31,7 +31,7 @@ var _ UserLikeRepo = (*userLikeRepo)(nil)
 type UserLikeRepo interface {
 	CreateUserLike(ctx context.Context, db *gorm.DB, data *model.UserLikeModel) (id int64, err error)
 	UpdateUserLike(ctx context.Context, id int64, data *model.UserLikeModel) error
-	GetUserLike(ctx context.Context, id int64) (ret *model.UserLikeModel, err error)
+	GetUserLike(ctx context.Context, userID, objID int64, objType int32) (ret *model.UserLikeModel, err error)
 	BatchGetUserLike(ctx context.Context, ids []int64) (ret []*model.UserLikeModel, err error)
 }
 
@@ -63,11 +63,8 @@ func (r *userLikeRepo) CreateUserLike(ctx context.Context, db *gorm.DB, data *mo
 
 // UpdateUserLike update item
 func (r *userLikeRepo) UpdateUserLike(ctx context.Context, id int64, data *model.UserLikeModel) error {
-	item, err := r.GetUserLike(ctx, id)
-	if err != nil {
-		return errors.Wrapf(err, "[repo] update UserLike err: %v", err)
-	}
-	err = r.db.Model(&item).Updates(data).Error
+	item := &model.UserLikeModel{}
+	err := r.db.Model(&item).Updates(data).Error
 	if err != nil {
 		return err
 	}
@@ -77,27 +74,12 @@ func (r *userLikeRepo) UpdateUserLike(ctx context.Context, id int64, data *model
 }
 
 // GetUserLike get a record
-func (r *userLikeRepo) GetUserLike(ctx context.Context, id int64) (ret *model.UserLikeModel, err error) {
-	// read cache
-	item, err := r.cache.GetUserLikeCache(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if item != nil {
-		return item, nil
-	}
+func (r *userLikeRepo) GetUserLike(ctx context.Context, userID, objID int64, objType int32) (ret *model.UserLikeModel, err error) {
 	// read db
 	data := new(model.UserLikeModel)
-	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_getUserLikeSQL, _tableUserLikeName), id).Scan(&data).Error
+	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_getUserLikeSQL, _tableUserLikeName), userID, objType, objID).Scan(&data).Error
 	if err != nil {
 		return
-	}
-	// write cache
-	if data.ID > 0 {
-		err = r.cache.SetUserLikeCache(ctx, id, data, 5*time.Minute)
-		if err != nil {
-			return nil, err
-		}
 	}
 	return data, nil
 }
