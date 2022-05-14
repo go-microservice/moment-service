@@ -19,10 +19,11 @@ import (
 )
 
 var (
-	_tableUserLikeName   = (&model.UserLikeModel{}).TableName()
-	_createSQL           = "INSERT IGNORE INTO %s SET obj_type=?, obj_id=?, user_id=?, status=1, created_at=? ON duplicate key update status=?"
-	_getUserLikeSQL      = "SELECT user_id, obj_type, obj_id, status FROM %s WHERE user_id=? AND obj_type=? AND obj_id=?"
-	_batchGetUserLikeSQL = "SELECT * FROM %s WHERE id IN (%s)"
+	_tableUserLikeName    = (&model.UserLikeModel{}).TableName()
+	_createSQL            = "INSERT IGNORE INTO %s SET obj_type=?, obj_id=?, user_id=?, status=1, created_at=? ON duplicate key update status=?"
+	_getUserLikeSQL       = "SELECT user_id, obj_type, obj_id, status FROM %s WHERE user_id=? AND obj_type=? AND obj_id=?"
+	_batchGetUserLikeSQL  = "SELECT * FROM %s WHERE id IN (%s)"
+	_listUserLikeByObjSQL = "SELECT * FROM %s WHERE obj_type=? AND obj_id=? AND status=1 and id <=? ORDER BY id DESC limit ?"
 )
 
 var _ UserLikeRepo = (*userLikeRepo)(nil)
@@ -33,6 +34,7 @@ type UserLikeRepo interface {
 	UpdateUserLike(ctx context.Context, id int64, data *model.UserLikeModel) error
 	GetUserLike(ctx context.Context, userID, objID int64, objType int32) (ret *model.UserLikeModel, err error)
 	BatchGetUserLike(ctx context.Context, ids []int64) (ret []*model.UserLikeModel, err error)
+	ListUserLikeByObj(ctx context.Context, objType int32, objID, lastID int64, limit int32) (ret []*model.UserLikeModel, err error)
 }
 
 type userLikeRepo struct {
@@ -120,4 +122,14 @@ func (r *userLikeRepo) BatchGetUserLike(ctx context.Context, ids []int64) (ret [
 		}
 	}
 	return ret, nil
+}
+
+func (r *userLikeRepo) ListUserLikeByObj(ctx context.Context, objType int32, objID, lastID int64, limit int32) (ret []*model.UserLikeModel, err error) {
+	var items []*model.UserLikeModel
+	err = r.db.WithContext(ctx).Raw(fmt.Sprintf(_listUserLikeByObjSQL, _tableUserLikeName), objType, objID, lastID, limit).Scan(&items).Error
+	if err != nil {
+		return
+	}
+
+	return items, nil
 }

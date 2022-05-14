@@ -11,16 +11,18 @@ service LikeService {
 	rpc UpdateLike (UpdateLikeRequest) returns (UpdateLikeReply);
 	rpc DeleteLike (DeleteLikeRequest) returns (DeleteLikeReply);
 	rpc GetLike (GetLikeRequest) returns (GetLikeReply);
-	rpc ListLike (ListLikeRequest) returns (ListLikeReply);
+	rpc ListPostLike (ListPostLikeRequest) returns (ListLikeReply);
+	rpc ListCommentLike (ListCommentLikeRequest) returns (ListLikeReply);
 }
 
 message Like {
-	int64 user_id = 1;
-	int32 obj_type = 2;
-	int64 obj_id = 3;
-	int32 status = 4;
-	int64 created_at = 5;
-	int64 updated_at = 6;
+	int64 id = 1;
+	int64 user_id = 2;
+	int32 obj_type = 3;
+	int64 obj_id = 4;
+	int32 status = 5;
+	int64 created_at = 6;
+	int64 updated_at = 7;
 }
 
 message CreateLikeRequest {
@@ -49,10 +51,17 @@ message GetLikeRequest {
 }
 message GetLikeReply {}
 
-message ListLikeRequest {
+message ListPostLikeRequest {
 	int64 user_id = 1;
-	int32 obj_type = 2;
-	int64 obj_id = 3;
+	int64 post_id = 2;
+	int64 last_id = 3;
+	int32 limit = 4;
+}
+message ListCommentLikeRequest {
+	int64 user_id = 1;
+	int64 comment_id = 2;
+	int64 last_id = 3;
+	int32 limit = 4;
 }
 message ListLikeReply {
 	repeated Like items = 1;

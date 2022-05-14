@@ -26,7 +26,8 @@ type LikeServiceClient interface {
 	UpdateLike(ctx context.Context, in *UpdateLikeRequest, opts ...grpc.CallOption) (*UpdateLikeReply, error)
 	DeleteLike(ctx context.Context, in *DeleteLikeRequest, opts ...grpc.CallOption) (*DeleteLikeReply, error)
 	GetLike(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*GetLikeReply, error)
-	ListLike(ctx context.Context, in *ListLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error)
+	ListPostLike(ctx context.Context, in *ListPostLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error)
+	ListCommentLike(ctx context.Context, in *ListCommentLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error)
 }
 
 type likeServiceClient struct {
@@ -73,9 +74,18 @@ func (c *likeServiceClient) GetLike(ctx context.Context, in *GetLikeRequest, opt
 	return out, nil
 }
 
-func (c *likeServiceClient) ListLike(ctx context.Context, in *ListLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error) {
+func (c *likeServiceClient) ListPostLike(ctx context.Context, in *ListPostLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error) {
 	out := new(ListLikeReply)
-	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/ListLike", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/ListPostLike", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *likeServiceClient) ListCommentLike(ctx context.Context, in *ListCommentLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error) {
+	out := new(ListLikeReply)
+	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/ListCommentLike", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +100,8 @@ type LikeServiceServer interface {
 	UpdateLike(context.Context, *UpdateLikeRequest) (*UpdateLikeReply, error)
 	DeleteLike(context.Context, *DeleteLikeRequest) (*DeleteLikeReply, error)
 	GetLike(context.Context, *GetLikeRequest) (*GetLikeReply, error)
-	ListLike(context.Context, *ListLikeRequest) (*ListLikeReply, error)
+	ListPostLike(context.Context, *ListPostLikeRequest) (*ListLikeReply, error)
+	ListCommentLike(context.Context, *ListCommentLikeRequest) (*ListLikeReply, error)
 	mustEmbedUnimplementedLikeServiceServer()
 }
 
@@ -110,8 +121,11 @@ func (UnimplementedLikeServiceServer) DeleteLike(context.Context, *DeleteLikeReq
 func (UnimplementedLikeServiceServer) GetLike(context.Context, *GetLikeRequest) (*GetLikeReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLike not implemented")
 }
-func (UnimplementedLikeServiceServer) ListLike(context.Context, *ListLikeRequest) (*ListLikeReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListLike not implemented")
+func (UnimplementedLikeServiceServer) ListPostLike(context.Context, *ListPostLikeRequest) (*ListLikeReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPostLike not implemented")
+}
+func (UnimplementedLikeServiceServer) ListCommentLike(context.Context, *ListCommentLikeRequest) (*ListLikeReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListCommentLike not implemented")
 }
 func (UnimplementedLikeServiceServer) mustEmbedUnimplementedLikeServiceServer() {}
 
@@ -198,20 +212,38 @@ func _LikeService_GetLike_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LikeService_ListLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListLikeRequest)
+func _LikeService_ListPostLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPostLikeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LikeServiceServer).ListLike(ctx, in)
+		return srv.(LikeServiceServer).ListPostLike(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.like.v1.LikeService/ListLike",
+		FullMethod: "/api.like.v1.LikeService/ListPostLike",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LikeServiceServer).ListLike(ctx, req.(*ListLikeRequest))
+		return srv.(LikeServiceServer).ListPostLike(ctx, req.(*ListPostLikeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LikeService_ListCommentLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCommentLikeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LikeServiceServer).ListCommentLike(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.like.v1.LikeService/ListCommentLike",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LikeServiceServer).ListCommentLike(ctx, req.(*ListCommentLikeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -240,8 +272,12 @@ var LikeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _LikeService_GetLike_Handler,
 		},
 		{
-			MethodName: "ListLike",
-			Handler:    _LikeService_ListLike_Handler,
+			MethodName: "ListPostLike",
+			Handler:    _LikeService_ListPostLike_Handler,
+		},
+		{
+			MethodName: "ListCommentLike",
+			Handler:    _LikeService_ListCommentLike_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
