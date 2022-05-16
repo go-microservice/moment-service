@@ -9,13 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-eagle/eagle/pkg/log"
-
 	"github.com/go-eagle/eagle/pkg/errcode"
+	"github.com/go-eagle/eagle/pkg/log"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 
-	pb "github.com/go-microservice/moment-service/api/post/v1"
+	v1 "github.com/go-microservice/moment-service/api/moment/v1"
 	"github.com/go-microservice/moment-service/internal/ecode"
 	"github.com/go-microservice/moment-service/internal/model"
 	"github.com/go-microservice/moment-service/internal/repository"
@@ -41,11 +40,11 @@ const (
 )
 
 var (
-	_ pb.PostServiceServer = (*PostServiceServer)(nil)
+	_ v1.PostServiceServer = (*PostServiceServer)(nil)
 )
 
 type PostServiceServer struct {
-	pb.UnimplementedPostServiceServer
+	v1.UnimplementedPostServiceServer
 
 	postRepo     repository.PostInfoRepo
 	latestRepo   repository.PostLatestRepo
@@ -67,7 +66,7 @@ func NewPostServiceServer(
 	}
 }
 
-func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostReply, error) {
+func (s *PostServiceServer) CreatePost(ctx context.Context, req *v1.CreatePostRequest) (*v1.CreatePostReply, error) {
 	// check param
 	if err := checkPostParam(req); err != nil {
 		return nil, err
@@ -160,12 +159,12 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *pb.CreatePostRe
 		return nil, err
 	}
 
-	return &pb.CreatePostReply{
+	return &v1.CreatePostReply{
 		Post: pbPost,
 	}, nil
 }
 
-func checkPostParam(req *pb.CreatePostRequest) error {
+func checkPostParam(req *v1.CreatePostRequest) error {
 	if req.UserId == 0 {
 		return ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 			"msg": errors.New("user_id is empty"),
@@ -193,7 +192,7 @@ func checkPostParam(req *pb.CreatePostRequest) error {
 	return nil
 }
 
-func getPostType(req *pb.CreatePostRequest) PostType {
+func getPostType(req *v1.CreatePostRequest) PostType {
 	if len(req.PicKeys) > 0 {
 		return PostTypeImage
 	}
@@ -207,7 +206,7 @@ func getPostType(req *pb.CreatePostRequest) PostType {
 	return PostTypeUnknown
 }
 
-func getContent(postType PostType, req *pb.CreatePostRequest) (string, error) {
+func getContent(postType PostType, req *v1.CreatePostRequest) (string, error) {
 	data := make(map[string]interface{})
 	switch postType {
 	case PostTypeText:
@@ -236,11 +235,11 @@ func getContent(postType PostType, req *pb.CreatePostRequest) (string, error) {
 	return string(content), nil
 }
 
-func (s *PostServiceServer) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostReply, error) {
-	return &pb.UpdatePostReply{}, nil
+func (s *PostServiceServer) UpdatePost(ctx context.Context, req *v1.UpdatePostRequest) (*v1.UpdatePostReply, error) {
+	return &v1.UpdatePostReply{}, nil
 }
 
-func (s *PostServiceServer) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostReply, error) {
+func (s *PostServiceServer) DeletePost(ctx context.Context, req *v1.DeletePostRequest) (*v1.DeletePostReply, error) {
 	if req.GetId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -248,7 +247,7 @@ func (s *PostServiceServer) DeletePost(ctx context.Context, req *pb.DeletePostRe
 	postID := req.GetId()
 
 	// check comment if exist
-	_, err := s.GetPost(ctx, &pb.GetPostRequest{Id: postID})
+	_, err := s.GetPost(ctx, &v1.GetPostRequest{Id: postID})
 	if err != nil {
 		return nil, err
 	}
@@ -287,10 +286,10 @@ func (s *PostServiceServer) DeletePost(ctx context.Context, req *pb.DeletePostRe
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
-	return &pb.DeletePostReply{}, nil
+	return &v1.DeletePostReply{}, nil
 }
 
-func (s *PostServiceServer) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPostReply, error) {
+func (s *PostServiceServer) GetPost(ctx context.Context, req *v1.GetPostRequest) (*v1.GetPostReply, error) {
 	if req.GetId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 			"msg": errors.New("post_id is empty"),
@@ -308,12 +307,12 @@ func (s *PostServiceServer) GetPost(ctx context.Context, req *pb.GetPostRequest)
 	if err != nil {
 		return nil, err
 	}
-	return &pb.GetPostReply{
+	return &v1.GetPostReply{
 		Post: pbPost,
 	}, nil
 }
 
-func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *pb.BatchGetPostRequest) (*pb.BatchGetPostReply, error) {
+func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *v1.BatchGetPostRequest) (*v1.BatchGetPostReply, error) {
 	if len(req.GetIds()) == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 			"msg": errors.New("post_ids is empty"),
@@ -326,7 +325,7 @@ func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *pb.BatchGetPo
 	}
 
 	var (
-		pbPosts []*pb.Post
+		pbPosts []*v1.Post
 		m       sync.Map
 		mu      sync.Mutex
 	)
@@ -376,15 +375,15 @@ func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *pb.BatchGetPo
 	// 保证顺序
 	for _, uid := range req.GetIds() {
 		post, _ := m.Load(uid)
-		pbPosts = append(pbPosts, post.(*pb.Post))
+		pbPosts = append(pbPosts, post.(*v1.Post))
 	}
 
-	return &pb.BatchGetPostReply{
+	return &v1.BatchGetPostReply{
 		Posts: pbPosts,
 	}, nil
 }
 
-func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRequest) (*pb.ListMyPostReply, error) {
+func (s *PostServiceServer) ListMyPost(ctx context.Context, req *v1.ListMyPostRequest) (*v1.ListMyPostReply, error) {
 	if req.GetLastId() == 0 {
 		req.LastId = math.MaxInt64
 	}
@@ -413,12 +412,12 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRe
 	for _, userPost := range userPosts {
 		postIds = append(postIds, userPost.PostID)
 	}
-	posts, err := s.BatchGetPost(ctx, &pb.BatchGetPostRequest{Ids: postIds})
+	posts, err := s.BatchGetPost(ctx, &v1.BatchGetPostRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ListMyPostReply{
+	return &v1.ListMyPostReply{
 		Items:   posts.GetPosts(),
 		Count:   int64(len(posts.GetPosts())),
 		HasMore: hasMore,
@@ -426,7 +425,7 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRe
 	}, nil
 }
 
-func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *pb.ListLatestPostRequest) (*pb.ListLatestPostReply, error) {
+func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *v1.ListLatestPostRequest) (*v1.ListLatestPostReply, error) {
 	if req.GetLastId() == 0 {
 		req.LastId = math.MaxInt64
 	}
@@ -455,12 +454,12 @@ func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *pb.ListLate
 	for _, latestPost := range latestPosts {
 		postIds = append(postIds, latestPost.PostID)
 	}
-	posts, err := s.BatchGetPost(ctx, &pb.BatchGetPostRequest{Ids: postIds})
+	posts, err := s.BatchGetPost(ctx, &v1.BatchGetPostRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ListLatestPostReply{
+	return &v1.ListLatestPostReply{
 		Items:   posts.GetPosts(),
 		Count:   int64(len(posts.GetPosts())),
 		HasMore: hasMore,
@@ -468,7 +467,7 @@ func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *pb.ListLate
 	}, nil
 }
 
-func (s *PostServiceServer) ListHotPost(ctx context.Context, req *pb.ListHotPostRequest) (*pb.ListHotPostReply, error) {
+func (s *PostServiceServer) ListHotPost(ctx context.Context, req *v1.ListHotPostRequest) (*v1.ListHotPostReply, error) {
 	if req.GetLastId() == 0 {
 		req.LastId = math.MaxInt64
 	}
@@ -497,12 +496,12 @@ func (s *PostServiceServer) ListHotPost(ctx context.Context, req *pb.ListHotPost
 	for _, hotPost := range hotPosts {
 		postIds = append(postIds, hotPost.PostID)
 	}
-	posts, err := s.BatchGetPost(ctx, &pb.BatchGetPostRequest{Ids: postIds})
+	posts, err := s.BatchGetPost(ctx, &v1.BatchGetPostRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	return &pb.ListHotPostReply{
+	return &v1.ListHotPostReply{
 		Items:   posts.GetPosts(),
 		Count:   int64(len(posts.GetPosts())),
 		HasMore: hasMore,
@@ -510,8 +509,8 @@ func (s *PostServiceServer) ListHotPost(ctx context.Context, req *pb.ListHotPost
 	}, nil
 }
 
-func convertPost(p *model.PostInfoModel) (*pb.Post, error) {
-	pbPost := &pb.Post{}
+func convertPost(p *model.PostInfoModel) (*v1.Post, error) {
+	pbPost := &v1.Post{}
 	err := copier.Copy(pbPost, &p)
 	if err != nil {
 		return nil, err

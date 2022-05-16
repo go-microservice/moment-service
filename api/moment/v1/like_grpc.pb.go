@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.3
-// source: api/like/v1/like.proto
+// source: api/moment/v1/like.proto
 
 package v1
 
@@ -40,7 +40,7 @@ func NewLikeServiceClient(cc grpc.ClientConnInterface) LikeServiceClient {
 
 func (c *likeServiceClient) CreateLike(ctx context.Context, in *CreateLikeRequest, opts ...grpc.CallOption) (*CreateLikeReply, error) {
 	out := new(CreateLikeReply)
-	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/CreateLike", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/CreateLike", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (c *likeServiceClient) CreateLike(ctx context.Context, in *CreateLikeReques
 
 func (c *likeServiceClient) UpdateLike(ctx context.Context, in *UpdateLikeRequest, opts ...grpc.CallOption) (*UpdateLikeReply, error) {
 	out := new(UpdateLikeReply)
-	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/UpdateLike", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/UpdateLike", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (c *likeServiceClient) UpdateLike(ctx context.Context, in *UpdateLikeReques
 
 func (c *likeServiceClient) DeleteLike(ctx context.Context, in *DeleteLikeRequest, opts ...grpc.CallOption) (*DeleteLikeReply, error) {
 	out := new(DeleteLikeReply)
-	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/DeleteLike", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/DeleteLike", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (c *likeServiceClient) DeleteLike(ctx context.Context, in *DeleteLikeReques
 
 func (c *likeServiceClient) GetLike(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*GetLikeReply, error) {
 	out := new(GetLikeReply)
-	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/GetLike", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/GetLike", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (c *likeServiceClient) GetLike(ctx context.Context, in *GetLikeRequest, opt
 
 func (c *likeServiceClient) ListPostLike(ctx context.Context, in *ListPostLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error) {
 	out := new(ListLikeReply)
-	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/ListPostLike", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/ListPostLike", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (c *likeServiceClient) ListPostLike(ctx context.Context, in *ListPostLikeRe
 
 func (c *likeServiceClient) ListCommentLike(ctx context.Context, in *ListCommentLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error) {
 	out := new(ListLikeReply)
-	err := c.cc.Invoke(ctx, "/api.like.v1.LikeService/ListCommentLike", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/ListCommentLike", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func _LikeService_CreateLike_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.like.v1.LikeService/CreateLike",
+		FullMethod: "/api.moment.v1.LikeService/CreateLike",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LikeServiceServer).CreateLike(ctx, req.(*CreateLikeRequest))
@@ -168,7 +168,7 @@ func _LikeService_UpdateLike_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.like.v1.LikeService/UpdateLike",
+		FullMethod: "/api.moment.v1.LikeService/UpdateLike",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LikeServiceServer).UpdateLike(ctx, req.(*UpdateLikeRequest))
@@ -186,7 +186,7 @@ func _LikeService_DeleteLike_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.like.v1.LikeService/DeleteLike",
+		FullMethod: "/api.moment.v1.LikeService/DeleteLike",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LikeServiceServer).DeleteLike(ctx, req.(*DeleteLikeRequest))
@@ -204,7 +204,7 @@ func _LikeService_GetLike_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.like.v1.LikeService/GetLike",
+		FullMethod: "/api.moment.v1.LikeService/GetLike",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LikeServiceServer).GetLike(ctx, req.(*GetLikeRequest))
@@ -222,7 +222,7 @@ func _LikeService_ListPostLike_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.like.v1.LikeService/ListPostLike",
+		FullMethod: "/api.moment.v1.LikeService/ListPostLike",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LikeServiceServer).ListPostLike(ctx, req.(*ListPostLikeRequest))
@@ -240,7 +240,7 @@ func _LikeService_ListCommentLike_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.like.v1.LikeService/ListCommentLike",
+		FullMethod: "/api.moment.v1.LikeService/ListCommentLike",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LikeServiceServer).ListCommentLike(ctx, req.(*ListCommentLikeRequest))
@@ -252,7 +252,7 @@ func _LikeService_ListCommentLike_Handler(srv interface{}, ctx context.Context, 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LikeService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.like.v1.LikeService",
+	ServiceName: "api.moment.v1.LikeService",
 	HandlerType: (*LikeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -281,5 +281,5 @@ var LikeService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/like/v1/like.proto",
+	Metadata: "api/moment/v1/like.proto",
 }

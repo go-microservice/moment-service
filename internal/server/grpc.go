@@ -7,9 +7,7 @@ import (
 	"github.com/go-eagle/eagle/pkg/transport/grpc"
 	"github.com/google/wire"
 
-	cmtv1 "github.com/go-microservice/moment-service/api/comment/v1"
-	likev1 "github.com/go-microservice/moment-service/api/like/v1"
-	postv1 "github.com/go-microservice/moment-service/api/post/v1"
+	v1 "github.com/go-microservice/moment-service/api/moment/v1"
 	"github.com/go-microservice/moment-service/internal/service"
 )
 
@@ -31,9 +29,9 @@ func NewGRPCServer(
 	)
 
 	// register biz service
-	postv1.RegisterPostServiceServer(grpcServer, postSvc)
-	cmtv1.RegisterCommentServiceServer(grpcServer, commentSvc)
-	likev1.RegisterLikeServiceServer(grpcServer, likeSvc)
+	v1.RegisterPostServiceServer(grpcServer, postSvc)
+	v1.RegisterCommentServiceServer(grpcServer, commentSvc)
+	v1.RegisterLikeServiceServer(grpcServer, likeSvc)
 
 	return grpcServer
 }

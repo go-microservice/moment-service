@@ -7,13 +7,10 @@ import (
 
 	"github.com/jinzhu/copier"
 
-	"github.com/go-microservice/moment-service/internal/model"
-
+	v1 "github.com/go-microservice/moment-service/api/moment/v1"
 	"github.com/go-microservice/moment-service/internal/ecode"
-
+	"github.com/go-microservice/moment-service/internal/model"
 	"github.com/go-microservice/moment-service/internal/repository"
-
-	pb "github.com/go-microservice/moment-service/api/like/v1"
 )
 
 type LikeType int
@@ -34,11 +31,11 @@ const (
 )
 
 var (
-	_ pb.LikeServiceServer = (*LikeServiceServer)(nil)
+	_ v1.LikeServiceServer = (*LikeServiceServer)(nil)
 )
 
 type LikeServiceServer struct {
-	pb.UnimplementedLikeServiceServer
+	v1.UnimplementedLikeServiceServer
 
 	likeRepo    repository.UserLikeRepo
 	postRepo    repository.PostInfoRepo
@@ -57,7 +54,7 @@ func NewLikeServiceServer(
 	}
 }
 
-func (s *LikeServiceServer) CreateLike(ctx context.Context, req *pb.CreateLikeRequest) (*pb.CreateLikeReply, error) {
+func (s *LikeServiceServer) CreateLike(ctx context.Context, req *v1.CreateLikeRequest) (*v1.CreateLikeReply, error) {
 	// check param
 	if err := checkCreateLikeParam(req); err != nil {
 		return nil, err
@@ -89,7 +86,7 @@ func (s *LikeServiceServer) CreateLike(ctx context.Context, req *pb.CreateLikeRe
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 	if hasLiked(userLike) {
-		return &pb.CreateLikeReply{}, ecode.ErrSuccess.WithDetails().Status(req).Err()
+		return &v1.CreateLikeReply{}, ecode.ErrSuccess.WithDetails().Status(req).Err()
 	}
 
 	// start transaction
@@ -133,12 +130,12 @@ func (s *LikeServiceServer) CreateLike(ctx context.Context, req *pb.CreateLikeRe
 		return nil, err
 	}
 
-	return &pb.CreateLikeReply{}, nil
+	return &v1.CreateLikeReply{}, nil
 }
-func (s *LikeServiceServer) UpdateLike(ctx context.Context, req *pb.UpdateLikeRequest) (*pb.UpdateLikeReply, error) {
-	return &pb.UpdateLikeReply{}, nil
+func (s *LikeServiceServer) UpdateLike(ctx context.Context, req *v1.UpdateLikeRequest) (*v1.UpdateLikeReply, error) {
+	return &v1.UpdateLikeReply{}, nil
 }
-func (s *LikeServiceServer) DeleteLike(ctx context.Context, req *pb.DeleteLikeRequest) (*pb.DeleteLikeReply, error) {
+func (s *LikeServiceServer) DeleteLike(ctx context.Context, req *v1.DeleteLikeRequest) (*v1.DeleteLikeReply, error) {
 	// check param
 	if err := checkDeleteLikeParam(req); err != nil {
 		return nil, err
@@ -204,7 +201,7 @@ func (s *LikeServiceServer) DeleteLike(ctx context.Context, req *pb.DeleteLikeRe
 	if err := tx.Commit().Error; err != nil {
 		return nil, err
 	}
-	return &pb.DeleteLikeReply{}, nil
+	return &v1.DeleteLikeReply{}, nil
 }
 
 func hasLiked(data *model.UserLikeModel) bool {
@@ -218,10 +215,10 @@ func hasLiked(data *model.UserLikeModel) bool {
 	return false
 }
 
-func (s *LikeServiceServer) GetLike(ctx context.Context, req *pb.GetLikeRequest) (*pb.GetLikeReply, error) {
-	return &pb.GetLikeReply{}, nil
+func (s *LikeServiceServer) GetLike(ctx context.Context, req *v1.GetLikeRequest) (*v1.GetLikeReply, error) {
+	return &v1.GetLikeReply{}, nil
 }
-func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *pb.ListPostLikeRequest) (*pb.ListLikeReply, error) {
+func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *v1.ListPostLikeRequest) (*v1.ListLikeReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -246,7 +243,7 @@ func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *pb.ListPostLi
 		likes = likes[:len(likes)-1]
 	}
 
-	var items []*pb.Like
+	var items []*v1.Like
 	for _, val := range likes {
 		v, err := convertLike(val)
 		if err != nil {
@@ -255,7 +252,7 @@ func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *pb.ListPostLi
 		items = append(items, v)
 	}
 
-	return &pb.ListLikeReply{
+	return &v1.ListLikeReply{
 		Items:   items,
 		Count:   int64(len(likes)),
 		HasMore: hasMore,
@@ -263,8 +260,8 @@ func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *pb.ListPostLi
 	}, nil
 }
 
-func convertLike(data *model.UserLikeModel) (*pb.Like, error) {
-	pbLike := &pb.Like{}
+func convertLike(data *model.UserLikeModel) (*v1.Like, error) {
+	pbLike := &v1.Like{}
 	err := copier.Copy(pbLike, &data)
 	if err != nil {
 		return nil, err
@@ -277,7 +274,7 @@ func convertLike(data *model.UserLikeModel) (*pb.Like, error) {
 	return pbLike, nil
 }
 
-func checkCreateLikeParam(req *pb.CreateLikeRequest) error {
+func checkCreateLikeParam(req *v1.CreateLikeRequest) error {
 	if req == nil {
 		return ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -297,7 +294,7 @@ func checkCreateLikeParam(req *pb.CreateLikeRequest) error {
 	return nil
 }
 
-func checkDeleteLikeParam(req *pb.DeleteLikeRequest) error {
+func checkDeleteLikeParam(req *v1.DeleteLikeRequest) error {
 	if req == nil {
 		return ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}

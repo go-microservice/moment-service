@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.3
-// source: api/comment/v1/comment.proto
+// source: api/moment/v1/comment.proto
 
 package v1
 
@@ -46,7 +46,7 @@ func NewCommentServiceClient(cc grpc.ClientConnInterface) CommentServiceClient {
 
 func (c *commentServiceClient) CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*CreateCommentReply, error) {
 	out := new(CreateCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/CreateComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/CreateComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *commentServiceClient) CreateComment(ctx context.Context, in *CreateComm
 
 func (c *commentServiceClient) UpdateComment(ctx context.Context, in *UpdateCommentRequest, opts ...grpc.CallOption) (*UpdateCommentReply, error) {
 	out := new(UpdateCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/UpdateComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/UpdateComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *commentServiceClient) UpdateComment(ctx context.Context, in *UpdateComm
 
 func (c *commentServiceClient) DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*DeleteCommentReply, error) {
 	out := new(DeleteCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/DeleteComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/DeleteComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *commentServiceClient) DeleteComment(ctx context.Context, in *DeleteComm
 
 func (c *commentServiceClient) ReplyComment(ctx context.Context, in *ReplyCommentRequest, opts ...grpc.CallOption) (*ReplyCommentReply, error) {
 	out := new(ReplyCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ReplyComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/ReplyComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *commentServiceClient) ReplyComment(ctx context.Context, in *ReplyCommen
 
 func (c *commentServiceClient) GetComment(ctx context.Context, in *GetCommentRequest, opts ...grpc.CallOption) (*GetCommentReply, error) {
 	out := new(GetCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/GetComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/GetComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *commentServiceClient) GetComment(ctx context.Context, in *GetCommentReq
 
 func (c *commentServiceClient) BatchGetComment(ctx context.Context, in *BatchGetCommentRequest, opts ...grpc.CallOption) (*BatchGetCommentReply, error) {
 	out := new(BatchGetCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/BatchGetComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/BatchGetComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (c *commentServiceClient) BatchGetComment(ctx context.Context, in *BatchGet
 
 func (c *commentServiceClient) ListHotComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error) {
 	out := new(ListCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ListHotComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/ListHotComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (c *commentServiceClient) ListHotComment(ctx context.Context, in *ListComme
 
 func (c *commentServiceClient) ListLatestComment(ctx context.Context, in *ListCommentRequest, opts ...grpc.CallOption) (*ListCommentReply, error) {
 	out := new(ListCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ListLatestComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/ListLatestComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (c *commentServiceClient) ListLatestComment(ctx context.Context, in *ListCo
 
 func (c *commentServiceClient) ListReplyComment(ctx context.Context, in *ListReplyCommentRequest, opts ...grpc.CallOption) (*ListReplyCommentReply, error) {
 	out := new(ListReplyCommentReply)
-	err := c.cc.Invoke(ctx, "/api.comment.v1.CommentService/ListReplyComment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.CommentService/ListReplyComment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func _CommentService_CreateComment_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/CreateComment",
+		FullMethod: "/api.moment.v1.CommentService/CreateComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).CreateComment(ctx, req.(*CreateCommentRequest))
@@ -216,7 +216,7 @@ func _CommentService_UpdateComment_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/UpdateComment",
+		FullMethod: "/api.moment.v1.CommentService/UpdateComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).UpdateComment(ctx, req.(*UpdateCommentRequest))
@@ -234,7 +234,7 @@ func _CommentService_DeleteComment_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/DeleteComment",
+		FullMethod: "/api.moment.v1.CommentService/DeleteComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).DeleteComment(ctx, req.(*DeleteCommentRequest))
@@ -252,7 +252,7 @@ func _CommentService_ReplyComment_Handler(srv interface{}, ctx context.Context, 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/ReplyComment",
+		FullMethod: "/api.moment.v1.CommentService/ReplyComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).ReplyComment(ctx, req.(*ReplyCommentRequest))
@@ -270,7 +270,7 @@ func _CommentService_GetComment_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/GetComment",
+		FullMethod: "/api.moment.v1.CommentService/GetComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).GetComment(ctx, req.(*GetCommentRequest))
@@ -288,7 +288,7 @@ func _CommentService_BatchGetComment_Handler(srv interface{}, ctx context.Contex
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/BatchGetComment",
+		FullMethod: "/api.moment.v1.CommentService/BatchGetComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).BatchGetComment(ctx, req.(*BatchGetCommentRequest))
@@ -306,7 +306,7 @@ func _CommentService_ListHotComment_Handler(srv interface{}, ctx context.Context
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/ListHotComment",
+		FullMethod: "/api.moment.v1.CommentService/ListHotComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).ListHotComment(ctx, req.(*ListCommentRequest))
@@ -324,7 +324,7 @@ func _CommentService_ListLatestComment_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/ListLatestComment",
+		FullMethod: "/api.moment.v1.CommentService/ListLatestComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).ListLatestComment(ctx, req.(*ListCommentRequest))
@@ -342,7 +342,7 @@ func _CommentService_ListReplyComment_Handler(srv interface{}, ctx context.Conte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.comment.v1.CommentService/ListReplyComment",
+		FullMethod: "/api.moment.v1.CommentService/ListReplyComment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommentServiceServer).ListReplyComment(ctx, req.(*ListReplyCommentRequest))
@@ -354,7 +354,7 @@ func _CommentService_ListReplyComment_Handler(srv interface{}, ctx context.Conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var CommentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.comment.v1.CommentService",
+	ServiceName: "api.moment.v1.CommentService",
 	HandlerType: (*CommentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -395,5 +395,5 @@ var CommentService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/comment/v1/comment.proto",
+	Metadata: "api/moment/v1/comment.proto",
 }

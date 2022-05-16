@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
+	v1 "github.com/go-microservice/moment-service/api/moment/v1"
+
 	"github.com/go-eagle/eagle/pkg/log"
 
-	pb "github.com/go-microservice/moment-service/api/comment/v1"
 	"github.com/go-microservice/moment-service/internal/ecode"
 	"github.com/go-microservice/moment-service/internal/model"
 	"github.com/go-microservice/moment-service/internal/repository"
@@ -26,11 +27,11 @@ const (
 )
 
 var (
-	_ pb.CommentServiceServer = (*CommentServiceServer)(nil)
+	_ v1.CommentServiceServer = (*CommentServiceServer)(nil)
 )
 
 type CommentServiceServer struct {
-	pb.UnimplementedCommentServiceServer
+	v1.UnimplementedCommentServiceServer
 
 	postRepo       repository.PostInfoRepo
 	cmtInfoRepo    repository.CommentInfoRepo
@@ -58,7 +59,7 @@ func NewCommentServiceServer(
 	}
 }
 
-func (s *CommentServiceServer) CreateComment(ctx context.Context, req *pb.CreateCommentRequest) (*pb.CreateCommentReply, error) {
+func (s *CommentServiceServer) CreateComment(ctx context.Context, req *v1.CreateCommentRequest) (*v1.CreateCommentReply, error) {
 	// check param
 	if err := checkCommentParam(req); err != nil {
 		return nil, err
@@ -164,16 +165,16 @@ func (s *CommentServiceServer) CreateComment(ctx context.Context, req *pb.Create
 		return nil, err
 	}
 
-	return &pb.CreateCommentReply{
+	return &v1.CreateCommentReply{
 		Comment: pbComment,
 	}, nil
 }
 
-func (s *CommentServiceServer) UpdateComment(ctx context.Context, req *pb.UpdateCommentRequest) (*pb.UpdateCommentReply, error) {
-	return &pb.UpdateCommentReply{}, nil
+func (s *CommentServiceServer) UpdateComment(ctx context.Context, req *v1.UpdateCommentRequest) (*v1.UpdateCommentReply, error) {
+	return &v1.UpdateCommentReply{}, nil
 }
 
-func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *pb.DeleteCommentRequest) (*pb.DeleteCommentReply, error) {
+func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *v1.DeleteCommentRequest) (*v1.DeleteCommentReply, error) {
 	if req.GetId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -181,7 +182,7 @@ func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *pb.Delete
 	commentID := req.GetId()
 
 	// check comment if exist
-	cmt, err := s.GetComment(ctx, &pb.GetCommentRequest{Id: commentID})
+	cmt, err := s.GetComment(ctx, &v1.GetCommentRequest{Id: commentID})
 	if err != nil {
 		return nil, err
 	}
@@ -221,17 +222,17 @@ func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *pb.Delete
 		return nil, err
 	}
 
-	return &pb.DeleteCommentReply{}, nil
+	return &v1.DeleteCommentReply{}, nil
 }
 
-func (s *CommentServiceServer) ReplyComment(ctx context.Context, req *pb.ReplyCommentRequest) (*pb.ReplyCommentReply, error) {
+func (s *CommentServiceServer) ReplyComment(ctx context.Context, req *v1.ReplyCommentRequest) (*v1.ReplyCommentReply, error) {
 	// check param
 	if err := checkReplyParam(req); err != nil {
 		return nil, err
 	}
 
 	// check comment if exist
-	comment, err := s.GetComment(ctx, &pb.GetCommentRequest{Id: req.GetCommentId()})
+	comment, err := s.GetComment(ctx, &v1.GetCommentRequest{Id: req.GetCommentId()})
 	if err != nil {
 		return nil, err
 	}
@@ -315,12 +316,12 @@ func (s *CommentServiceServer) ReplyComment(ctx context.Context, req *pb.ReplyCo
 		return nil, err
 	}
 
-	return &pb.ReplyCommentReply{
+	return &v1.ReplyCommentReply{
 		Comment: pbComment,
 	}, nil
 }
 
-func (s *CommentServiceServer) GetComment(ctx context.Context, req *pb.GetCommentRequest) (*pb.GetCommentReply, error) {
+func (s *CommentServiceServer) GetComment(ctx context.Context, req *v1.GetCommentRequest) (*v1.GetCommentReply, error) {
 	if req.GetId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -343,12 +344,12 @@ func (s *CommentServiceServer) GetComment(ctx context.Context, req *pb.GetCommen
 		return nil, err
 	}
 
-	return &pb.GetCommentReply{
+	return &v1.GetCommentReply{
 		Comment: pbComment,
 	}, nil
 }
 
-func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *pb.BatchGetCommentRequest) (*pb.BatchGetCommentReply, error) {
+func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *v1.BatchGetCommentRequest) (*v1.BatchGetCommentReply, error) {
 	if len(req.GetIds()) == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -363,7 +364,7 @@ func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *pb.Batc
 	}
 
 	var (
-		comments []*pb.Comment
+		comments []*v1.Comment
 		m        sync.Map
 		mu       sync.Mutex
 	)
@@ -418,15 +419,15 @@ func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *pb.Batc
 	// keep order
 	for _, uid := range req.GetIds() {
 		comment, _ := m.Load(uid)
-		comments = append(comments, comment.(*pb.Comment))
+		comments = append(comments, comment.(*v1.Comment))
 	}
 
-	return &pb.BatchGetCommentReply{
+	return &v1.BatchGetCommentReply{
 		Comments: comments,
 	}, nil
 }
 
-func (s *CommentServiceServer) ListHotComment(ctx context.Context, req *pb.ListCommentRequest) (*pb.ListCommentReply, error) {
+func (s *CommentServiceServer) ListHotComment(ctx context.Context, req *v1.ListCommentRequest) (*v1.ListCommentReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -451,12 +452,12 @@ func (s *CommentServiceServer) ListHotComment(ctx context.Context, req *pb.ListC
 		cmtIDs = cmtIDs[:len(cmtIDs)-1]
 	}
 
-	items, err := s.BatchGetComment(ctx, &pb.BatchGetCommentRequest{Ids: cmtIDs})
+	items, err := s.BatchGetComment(ctx, &v1.BatchGetCommentRequest{Ids: cmtIDs})
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
-	return &pb.ListCommentReply{
+	return &v1.ListCommentReply{
 		Items:   items.GetComments(),
 		Count:   int64(len(items.GetComments())),
 		HasMore: hasMore,
@@ -464,7 +465,7 @@ func (s *CommentServiceServer) ListHotComment(ctx context.Context, req *pb.ListC
 	}, nil
 }
 
-func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *pb.ListCommentRequest) (*pb.ListCommentReply, error) {
+func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *v1.ListCommentRequest) (*v1.ListCommentReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -489,12 +490,12 @@ func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *pb.Li
 		cmtIDs = cmtIDs[:len(cmtIDs)-1]
 	}
 
-	cmts, err := s.BatchGetComment(ctx, &pb.BatchGetCommentRequest{Ids: cmtIDs})
+	cmts, err := s.BatchGetComment(ctx, &v1.BatchGetCommentRequest{Ids: cmtIDs})
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
-	return &pb.ListCommentReply{
+	return &v1.ListCommentReply{
 		Items:   cmts.GetComments(),
 		Count:   int64(len(cmts.GetComments())),
 		HasMore: hasMore,
@@ -502,7 +503,7 @@ func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *pb.Li
 	}, nil
 }
 
-func (s *CommentServiceServer) ListReplyComment(ctx context.Context, req *pb.ListReplyCommentRequest) (*pb.ListReplyCommentReply, error) {
+func (s *CommentServiceServer) ListReplyComment(ctx context.Context, req *v1.ListReplyCommentRequest) (*v1.ListReplyCommentReply, error) {
 	if req.GetCommentId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -527,12 +528,12 @@ func (s *CommentServiceServer) ListReplyComment(ctx context.Context, req *pb.Lis
 		cmtIDs = cmtIDs[:len(cmtIDs)-1]
 	}
 
-	cmts, err := s.BatchGetComment(ctx, &pb.BatchGetCommentRequest{Ids: cmtIDs})
+	cmts, err := s.BatchGetComment(ctx, &v1.BatchGetCommentRequest{Ids: cmtIDs})
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
-	return &pb.ListReplyCommentReply{
+	return &v1.ListReplyCommentReply{
 		Items:   cmts.GetComments(),
 		Count:   int64(len(cmts.GetComments())),
 		HasMore: hasMore,
@@ -540,7 +541,7 @@ func (s *CommentServiceServer) ListReplyComment(ctx context.Context, req *pb.Lis
 	}, nil
 }
 
-func checkCommentParam(req *pb.CreateCommentRequest) error {
+func checkCommentParam(req *v1.CreateCommentRequest) error {
 	if req == nil {
 		return ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -560,7 +561,7 @@ func checkCommentParam(req *pb.CreateCommentRequest) error {
 	return nil
 }
 
-func checkReplyParam(req *pb.ReplyCommentRequest) error {
+func checkReplyParam(req *v1.ReplyCommentRequest) error {
 	if req == nil {
 		return ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -580,8 +581,8 @@ func checkReplyParam(req *pb.ReplyCommentRequest) error {
 	return nil
 }
 
-func convertComment(cmt *model.CommentInfoModel, c *model.CommentContentModel) (*pb.Comment, error) {
-	pbComment := &pb.Comment{}
+func convertComment(cmt *model.CommentInfoModel, c *model.CommentContentModel) (*v1.Comment, error) {
+	pbComment := &v1.Comment{}
 	err := copier.Copy(pbComment, &cmt)
 	if err != nil {
 		return nil, err

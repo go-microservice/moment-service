@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.12.3
-// source: api/post/v1/post.proto
+// source: api/moment/v1/post.proto
 
 package v1
 
@@ -45,7 +45,7 @@ func NewPostServiceClient(cc grpc.ClientConnInterface) PostServiceClient {
 
 func (c *postServiceClient) CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostReply, error) {
 	out := new(CreatePostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/CreatePost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/CreatePost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (c *postServiceClient) CreatePost(ctx context.Context, in *CreatePostReques
 
 func (c *postServiceClient) UpdatePost(ctx context.Context, in *UpdatePostRequest, opts ...grpc.CallOption) (*UpdatePostReply, error) {
 	out := new(UpdatePostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/UpdatePost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/UpdatePost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *postServiceClient) UpdatePost(ctx context.Context, in *UpdatePostReques
 
 func (c *postServiceClient) DeletePost(ctx context.Context, in *DeletePostRequest, opts ...grpc.CallOption) (*DeletePostReply, error) {
 	out := new(DeletePostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/DeletePost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/DeletePost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (c *postServiceClient) DeletePost(ctx context.Context, in *DeletePostReques
 
 func (c *postServiceClient) GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostReply, error) {
 	out := new(GetPostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/GetPost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/GetPost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *postServiceClient) GetPost(ctx context.Context, in *GetPostRequest, opt
 
 func (c *postServiceClient) BatchGetPost(ctx context.Context, in *BatchGetPostRequest, opts ...grpc.CallOption) (*BatchGetPostReply, error) {
 	out := new(BatchGetPostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/BatchGetPost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/BatchGetPost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (c *postServiceClient) BatchGetPost(ctx context.Context, in *BatchGetPostRe
 
 func (c *postServiceClient) ListMyPost(ctx context.Context, in *ListMyPostRequest, opts ...grpc.CallOption) (*ListMyPostReply, error) {
 	out := new(ListMyPostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/ListMyPost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/ListMyPost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (c *postServiceClient) ListMyPost(ctx context.Context, in *ListMyPostReques
 
 func (c *postServiceClient) ListLatestPost(ctx context.Context, in *ListLatestPostRequest, opts ...grpc.CallOption) (*ListLatestPostReply, error) {
 	out := new(ListLatestPostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/ListLatestPost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/ListLatestPost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *postServiceClient) ListLatestPost(ctx context.Context, in *ListLatestPo
 
 func (c *postServiceClient) ListHotPost(ctx context.Context, in *ListHotPostRequest, opts ...grpc.CallOption) (*ListHotPostReply, error) {
 	out := new(ListHotPostReply)
-	err := c.cc.Invoke(ctx, "/api.post.v1.PostService/ListHotPost", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.PostService/ListHotPost", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func _PostService_CreatePost_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/CreatePost",
+		FullMethod: "/api.moment.v1.PostService/CreatePost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).CreatePost(ctx, req.(*CreatePostRequest))
@@ -202,7 +202,7 @@ func _PostService_UpdatePost_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/UpdatePost",
+		FullMethod: "/api.moment.v1.PostService/UpdatePost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).UpdatePost(ctx, req.(*UpdatePostRequest))
@@ -220,7 +220,7 @@ func _PostService_DeletePost_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/DeletePost",
+		FullMethod: "/api.moment.v1.PostService/DeletePost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).DeletePost(ctx, req.(*DeletePostRequest))
@@ -238,7 +238,7 @@ func _PostService_GetPost_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/GetPost",
+		FullMethod: "/api.moment.v1.PostService/GetPost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).GetPost(ctx, req.(*GetPostRequest))
@@ -256,7 +256,7 @@ func _PostService_BatchGetPost_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/BatchGetPost",
+		FullMethod: "/api.moment.v1.PostService/BatchGetPost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).BatchGetPost(ctx, req.(*BatchGetPostRequest))
@@ -274,7 +274,7 @@ func _PostService_ListMyPost_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/ListMyPost",
+		FullMethod: "/api.moment.v1.PostService/ListMyPost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).ListMyPost(ctx, req.(*ListMyPostRequest))
@@ -292,7 +292,7 @@ func _PostService_ListLatestPost_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/ListLatestPost",
+		FullMethod: "/api.moment.v1.PostService/ListLatestPost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).ListLatestPost(ctx, req.(*ListLatestPostRequest))
@@ -310,7 +310,7 @@ func _PostService_ListHotPost_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.post.v1.PostService/ListHotPost",
+		FullMethod: "/api.moment.v1.PostService/ListHotPost",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PostServiceServer).ListHotPost(ctx, req.(*ListHotPostRequest))
@@ -322,7 +322,7 @@ func _PostService_ListHotPost_Handler(srv interface{}, ctx context.Context, dec 
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var PostService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.post.v1.PostService",
+	ServiceName: "api.moment.v1.PostService",
 	HandlerType: (*PostServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -359,5 +359,5 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/post/v1/post.proto",
+	Metadata: "api/moment/v1/post.proto",
 }

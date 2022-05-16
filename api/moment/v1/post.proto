@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package api.post.v1;
+package api.moment.v1;
 
-option go_package = "github.com/go-microservice/moment-service/api/post/v1;v1";
+option go_package = "github.com/go-microservice/moment-service/api/moment/v1;v1";
 option java_multiple_files = true;
-option java_package = "api.post.v1";
+option java_package = "api.moment.v1";
 
 service PostService {
 	rpc CreatePost (CreatePostRequest) returns (CreatePostReply);
