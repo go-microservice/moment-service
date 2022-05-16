@@ -24,7 +24,7 @@ const (
 type PostInfoCache interface {
 	SetPostInfoCache(ctx context.Context, id int64, data *model.PostInfoModel, duration time.Duration) error
 	GetPostInfoCache(ctx context.Context, id int64) (data *model.PostInfoModel, err error)
-	MultiGetPostInfoCache(ctx context.Context, ids []int64) (map[string]*model.PostInfoModel, error)
+	MultiGetPostInfoCache(ctx context.Context, ids []int64) (map[int64]*model.PostInfoModel, error)
 	MultiSetPostInfoCache(ctx context.Context, data []*model.PostInfoModel, duration time.Duration) error
 	DelPostInfoCache(ctx context.Context, id int64) error
 }
@@ -75,18 +75,26 @@ func (c *postInfoCache) GetPostInfoCache(ctx context.Context, id int64) (data *m
 }
 
 // MultiGetPostInfoCache batch get cache
-func (c *postInfoCache) MultiGetPostInfoCache(ctx context.Context, ids []int64) (map[string]*model.PostInfoModel, error) {
+func (c *postInfoCache) MultiGetPostInfoCache(ctx context.Context, ids []int64) (map[int64]*model.PostInfoModel, error) {
 	var keys []string
 	for _, v := range ids {
 		cacheKey := c.GetPostInfoCacheKey(v)
 		keys = append(keys, cacheKey)
 	}
 
-	// NOTE: 需要在这里make实例化，如果在返回参数里直接定义会报 nil map
-	retMap := make(map[string]*model.PostInfoModel)
-	err := c.cache.MultiGet(ctx, keys, retMap)
+	cacheMap := make(map[string]*model.PostInfoModel)
+	err := c.cache.MultiGet(ctx, keys, cacheMap)
 	if err != nil {
 		return nil, err
+	}
+
+	retMap := make(map[int64]*model.PostInfoModel)
+	for _, v := range ids {
+		cacheKey := c.GetPostInfoCacheKey(v)
+		val, ok := cacheMap[cacheKey]
+		if ok {
+			retMap[v] = val
+		}
 	}
 	return retMap, nil
 }

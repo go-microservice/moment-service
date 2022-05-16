@@ -76,6 +76,7 @@ func (r *userLikeRepo) UpdateUserLike(ctx context.Context, id int64, data *model
 }
 
 // GetUserLike get a record
+// TODO: add cache
 func (r *userLikeRepo) GetUserLike(ctx context.Context, userID, objID int64, objType int32) (ret *model.UserLikeModel, err error) {
 	// read db
 	data := new(model.UserLikeModel)

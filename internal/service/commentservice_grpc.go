@@ -37,6 +37,7 @@ type CommentServiceServer struct {
 	cmtContentRepo repository.CommentContentRepo
 	cmtLatestRepo  repository.CommentLatestRepo
 	cmtHotRepo     repository.CommentHotRepo
+	userCmtRepo    repository.UserCommentRepo
 }
 
 func NewCommentServiceServer(
@@ -45,6 +46,7 @@ func NewCommentServiceServer(
 	cmtContentRepo repository.CommentContentRepo,
 	cmtLatestRepo repository.CommentLatestRepo,
 	cmtTopRepo repository.CommentHotRepo,
+	userCmtRepo repository.UserCommentRepo,
 ) *CommentServiceServer {
 	return &CommentServiceServer{
 		postRepo:       postRepo,
@@ -52,6 +54,7 @@ func NewCommentServiceServer(
 		cmtContentRepo: cmtContentRepo,
 		cmtLatestRepo:  cmtLatestRepo,
 		cmtHotRepo:     cmtTopRepo,
+		userCmtRepo:    userCmtRepo,
 	}
 }
 
@@ -123,6 +126,19 @@ func (s *CommentServiceServer) CreateComment(ctx context.Context, req *pb.Create
 		CreatedAt: createTime,
 	}
 	_, err = s.cmtHotRepo.CreateCommentHot(ctx, tx, cmtHot)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// user comment
+	userComment := &model.UserCommentModel{
+		CommentID: cmtID,
+		UserID:    req.GetUserId(),
+		DelFlag:   int(DelFlagNormal),
+		CreatedAt: createTime,
+	}
+	_, err = s.userCmtRepo.CreateUserComment(ctx, tx, userComment)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -399,7 +415,7 @@ func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *pb.Batc
 	close(errChan)
 	close(finished)
 
-	// 保证顺序
+	// keep order
 	for _, uid := range req.GetIds() {
 		comment, _ := m.Load(uid)
 		comments = append(comments, comment.(*pb.Comment))

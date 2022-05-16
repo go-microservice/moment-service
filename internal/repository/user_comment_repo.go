@@ -28,7 +28,7 @@ var _ UserCommentRepo = (*userCommentRepo)(nil)
 
 // UserCommentRepo define a repo interface
 type UserCommentRepo interface {
-	CreateUserComment(ctx context.Context, data *model.UserCommentModel) (id int64, err error)
+	CreateUserComment(ctx context.Context, db *gorm.DB, data *model.UserCommentModel) (id int64, err error)
 	UpdateUserComment(ctx context.Context, id int64, data *model.UserCommentModel) error
 	GetUserComment(ctx context.Context, id int64) (ret *model.UserCommentModel, err error)
 	BatchGetUserComment(ctx context.Context, ids []int64) (ret []*model.UserCommentModel, err error)
@@ -50,8 +50,8 @@ func NewUserComment(db *gorm.DB, cache cache.UserCommentCache) UserCommentRepo {
 }
 
 // CreateUserComment create a item
-func (r *userCommentRepo) CreateUserComment(ctx context.Context, data *model.UserCommentModel) (id int64, err error) {
-	err = r.db.WithContext(ctx).Create(&data).Error
+func (r *userCommentRepo) CreateUserComment(ctx context.Context, db *gorm.DB, data *model.UserCommentModel) (id int64, err error) {
+	err = db.WithContext(ctx).Create(&data).Error
 	if err != nil {
 		return 0, errors.Wrap(err, "[repo] create UserComment err")
 	}

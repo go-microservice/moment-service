@@ -82,7 +82,6 @@ func (c *commentInfoCache) MultiGetCommentInfoCache(ctx context.Context, ids []i
 		keys = append(keys, cacheKey)
 	}
 
-	// NOTE: 需要在这里make实例化，如果在返回参数里直接定义会报 nil map
 	cacheMap := make(map[string]*model.CommentInfoModel)
 	err := c.cache.MultiGet(ctx, keys, cacheMap)
 	if err != nil {

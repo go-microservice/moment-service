@@ -16,5 +16,6 @@ var ProviderSet = wire.NewSet(
 	NewCommentContent,
 	NewCommentLatest,
 	NewCommentHot,
+	NewUserComment,
 	NewUserLike,
 )

@@ -413,24 +413,14 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *pb.ListMyPostRe
 	for _, userPost := range userPosts {
 		postIds = append(postIds, userPost.PostID)
 	}
-	posts, err := s.postRepo.BatchGetPostInfo(ctx, postIds)
+	posts, err := s.BatchGetPost(ctx, &pb.BatchGetPostRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	// convert to pb
-	pbPosts := make([]*pb.Post, 0, len(posts))
-	for _, post := range posts {
-		pbPost, err := convertPost(post)
-		if err != nil {
-			return nil, err
-		}
-		pbPosts = append(pbPosts, pbPost)
-	}
-
 	return &pb.ListMyPostReply{
-		Items:   pbPosts,
-		Count:   int64(len(pbPosts)),
+		Items:   posts.GetPosts(),
+		Count:   int64(len(posts.GetPosts())),
 		HasMore: hasMore,
 		LastId:  lastId,
 	}, nil
@@ -465,24 +455,14 @@ func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *pb.ListLate
 	for _, latestPost := range latestPosts {
 		postIds = append(postIds, latestPost.PostID)
 	}
-	posts, err := s.postRepo.BatchGetPostInfo(ctx, postIds)
+	posts, err := s.BatchGetPost(ctx, &pb.BatchGetPostRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	// convert to pb
-	pbPosts := make([]*pb.Post, 0, len(posts))
-	for _, post := range posts {
-		pbPost, err := convertPost(post)
-		if err != nil {
-			return nil, err
-		}
-		pbPosts = append(pbPosts, pbPost)
-	}
-
 	return &pb.ListLatestPostReply{
-		Items:   pbPosts,
-		Count:   int64(len(pbPosts)),
+		Items:   posts.GetPosts(),
+		Count:   int64(len(posts.GetPosts())),
 		HasMore: hasMore,
 		LastId:  lastId,
 	}, nil
@@ -517,24 +497,14 @@ func (s *PostServiceServer) ListHotPost(ctx context.Context, req *pb.ListHotPost
 	for _, hotPost := range hotPosts {
 		postIds = append(postIds, hotPost.PostID)
 	}
-	posts, err := s.postRepo.BatchGetPostInfo(ctx, postIds)
+	posts, err := s.BatchGetPost(ctx, &pb.BatchGetPostRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	// convert to pb
-	pbPosts := make([]*pb.Post, 0, len(posts))
-	for _, post := range posts {
-		pbPost, err := convertPost(post)
-		if err != nil {
-			return nil, err
-		}
-		pbPosts = append(pbPosts, pbPost)
-	}
-
 	return &pb.ListHotPostReply{
-		Items:   pbPosts,
-		Count:   int64(len(pbPosts)),
+		Items:   posts.GetPosts(),
+		Count:   int64(len(posts.GetPosts())),
 		HasMore: hasMore,
 		LastId:  lastId,
 	}, nil

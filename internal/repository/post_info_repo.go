@@ -195,7 +195,7 @@ func (r *postInfoRepo) BatchGetPostInfo(ctx context.Context, ids []int64) (ret [
 	}
 	var missedID []int64
 	for _, v := range ids {
-		item, ok := itemMap[cast.ToString(v)]
+		item, ok := itemMap[v]
 		if !ok {
 			missedID = append(missedID, v)
 			continue
