@@ -1,6 +1,6 @@
-Name: eagle
+Name: moment-svc
 Version: 1.0.0
-PprofPort: :5555
+PprofPort: :5557
 Mode: debug                 # debug, release, test
 JwtSecret: JWT_SECRET
 JwtTimeout: 86400
@@ -13,10 +13,10 @@ EnableTrace: false
 EnablePprof: true
 
 HTTP:
-  Addr: :8080
+  Addr: :8082
   ReadTimeout: 3s
   WriteTimeout: 3s
 GRPC:
-  Addr: :9090
+  Addr: :9092
   ReadTimeout: 5s
   WriteTimeout: 5s

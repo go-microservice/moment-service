@@ -1,8 +1,6 @@
 package server
 
 import (
-	"time"
-
 	"github.com/go-eagle/eagle/pkg/app"
 	"github.com/go-eagle/eagle/pkg/transport/grpc"
 	"github.com/google/wire"
@@ -24,8 +22,9 @@ func NewGRPCServer(
 
 	grpcServer := grpc.NewServer(
 		grpc.Network("tcp"),
-		grpc.Address(":9090"),
-		grpc.Timeout(3*time.Second),
+		grpc.Address(cfg.Addr),
+		grpc.Timeout(cfg.ReadTimeout),
+		grpc.EnableLog(),
 	)
 
 	// register biz service

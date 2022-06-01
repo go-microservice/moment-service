@@ -3,9 +3,9 @@ module github.com/go-microservice/moment-service
 go 1.16
 
 require (
-	github.com/gin-gonic/gin v1.7.2
-	github.com/go-eagle/eagle v1.4.1-0.20220212135746-5819a33442b6
-	github.com/go-redis/redis/v8 v8.11.4 // indirect
+	github.com/gin-gonic/gin v1.7.3
+	github.com/go-eagle/eagle v1.4.1-0.20220530122715-ee4d43d37e53
+	github.com/go-redis/redis/v8 v8.11.4
 	github.com/google/wire v0.5.0
 	github.com/hibiken/asynq v0.22.0
 	github.com/jinzhu/copier v0.3.5

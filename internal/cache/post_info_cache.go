@@ -67,7 +67,7 @@ func (c *postInfoCache) SetPostInfoCache(ctx context.Context, id int64, data *mo
 func (c *postInfoCache) GetPostInfoCache(ctx context.Context, id int64) (data *model.PostInfoModel, err error) {
 	cacheKey := c.GetPostInfoCacheKey(id)
 	err = c.cache.Get(ctx, cacheKey, &data)
-	if err != nil {
+	if err != nil && err != redis.ErrRedisNotFound {
 		log.WithContext(ctx).Warnf("get err from redis, err: %+v", err)
 		return nil, err
 	}
