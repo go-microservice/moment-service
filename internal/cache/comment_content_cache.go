@@ -67,7 +67,7 @@ func (c *commentContentCache) SetCommentContentCache(ctx context.Context, id int
 func (c *commentContentCache) GetCommentContentCache(ctx context.Context, id int64) (data *model.CommentContentModel, err error) {
 	cacheKey := c.GetCommentContentCacheKey(id)
 	err = c.cache.Get(ctx, cacheKey, &data)
-	if err != nil {
+	if err != nil && err != redis.ErrRedisNotFound {
 		log.WithContext(ctx).Warnf("get err from redis, err: %+v", err)
 		return nil, err
 	}
