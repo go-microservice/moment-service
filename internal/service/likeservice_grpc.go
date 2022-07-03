@@ -218,6 +218,7 @@ func hasLiked(data *model.UserLikeModel) bool {
 func (s *LikeServiceServer) GetLike(ctx context.Context, req *v1.GetLikeRequest) (*v1.GetLikeReply, error) {
 	return &v1.GetLikeReply{}, nil
 }
+
 func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *v1.ListPostLikeRequest) (*v1.ListLikeReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
@@ -229,6 +230,48 @@ func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *v1.ListPostLi
 		req.Limit = 10
 	}
 	likes, err := s.likeRepo.ListUserLikeByObj(ctx, int32(LikeTypePost), req.GetPostId(), req.GetLastId(), req.GetLimit()+1)
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	var (
+		hasMore bool
+		lastId  int64
+	)
+	if len(likes) > int(req.GetLimit()) {
+		hasMore = true
+		lastId = likes[len(likes)-1].ID
+		likes = likes[:len(likes)-1]
+	}
+
+	var items []*v1.Like
+	for _, val := range likes {
+		v, err := convertLike(val)
+		if err != nil {
+			continue
+		}
+		items = append(items, v)
+	}
+
+	return &v1.ListLikeReply{
+		Items:   items,
+		Count:   int64(len(likes)),
+		HasMore: hasMore,
+		LastId:  lastId,
+	}, nil
+}
+
+func (s *LikeServiceServer) ListCommentLike(ctx context.Context, req *v1.ListCommentLikeRequest) (*v1.ListLikeReply, error) {
+	if req.GetCommentId() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+	if req.GetLastId() == 0 {
+		req.LastId = math.MaxInt64
+	}
+	if req.GetLimit() == 0 {
+		req.Limit = 10
+	}
+	likes, err := s.likeRepo.ListUserLikeByObj(ctx, int32(LikeTypeComment), req.GetCommentId(), req.GetLastId(), req.GetLimit()+1)
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
