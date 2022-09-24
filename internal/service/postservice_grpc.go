@@ -195,11 +195,9 @@ func checkPostParam(req *v1.CreatePostRequest) error {
 func getPostType(req *v1.CreatePostRequest) PostType {
 	if len(req.PicKeys) > 0 {
 		return PostTypeImage
-	}
-	if len(req.VideoKey) > 0 {
+	} else if len(req.VideoKey) > 0 {
 		return PostTypeVideo
-	}
-	if len(req.Text) > 0 {
+	} else if len(req.Text) > 0 {
 		return PostTypeText
 	}
 
@@ -246,10 +244,15 @@ func (s *PostServiceServer) DeletePost(ctx context.Context, req *v1.DeletePostRe
 
 	postID := req.GetId()
 
-	// check comment if exist
-	_, err := s.GetPost(ctx, &v1.GetPostRequest{Id: postID})
+	// check post if exist
+	post, err := s.GetPost(ctx, &v1.GetPostRequest{Id: postID})
 	if err != nil {
 		return nil, err
+	}
+
+	// check if has delete permission
+	if req.GetUserId() != post.GetPost().UserId {
+		return nil, ecode.ErrAccessDenied.WithDetails().Status(req).Err()
 	}
 
 	// start transaction

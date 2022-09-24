@@ -187,6 +187,11 @@ func (s *CommentServiceServer) DeleteComment(ctx context.Context, req *v1.Delete
 		return nil, err
 	}
 
+	// check if has delete permission
+	if req.GetUserId() != cmt.GetComment().UserId {
+		return nil, ecode.ErrAccessDenied.WithDetails().Status(req).Err()
+	}
+
 	// start transaction
 	tx := model.GetDB().Begin()
 	if tx == nil {
