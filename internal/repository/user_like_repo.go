@@ -20,7 +20,7 @@ import (
 
 var (
 	_tableUserLikeName    = (&model.UserLikeModel{}).TableName()
-	_createSQL            = "INSERT IGNORE INTO %s SET obj_type=?, obj_id=?, user_id=?, status=1, created_at=? ON duplicate key update status=?"
+	_createSQL            = "INSERT IGNORE INTO %s SET obj_type=?, obj_id=?, user_id=?, status=?, created_at=? ON duplicate key update status=?"
 	_getUserLikeSQL       = "SELECT user_id, obj_type, obj_id, status FROM %s WHERE user_id=? AND obj_type=? AND obj_id=?"
 	_batchGetUserLikeSQL  = "SELECT * FROM %s WHERE id IN (%s)"
 	_listUserLikeByObjSQL = "SELECT * FROM %s WHERE obj_type=? AND obj_id=? AND status=1 and id <=? ORDER BY id DESC limit ?"
@@ -55,7 +55,7 @@ func NewUserLike(db *gorm.DB, cache cache.UserLikeCache) UserLikeRepo {
 // CreateUserLike create a item
 func (r *userLikeRepo) CreateUserLike(ctx context.Context, db *gorm.DB, data *model.UserLikeModel) (id int64, err error) {
 	sql := fmt.Sprintf(_createSQL, data.TableName())
-	err = db.WithContext(ctx).Exec(sql, data.ObjType, data.ObjID, data.UserID, data.CreatedAt, data.Status).Error
+	err = db.WithContext(ctx).Exec(sql, data.ObjType, data.ObjID, data.UserID, data.Status, data.CreatedAt, data.Status).Error
 	if err != nil {
 		return 0, errors.Wrap(err, "[repo] create UserLike err")
 	}

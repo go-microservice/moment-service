@@ -127,7 +127,7 @@ func (r *commentInfoRepo) IncrLikeCount(ctx context.Context, db *gorm.DB, id int
 }
 
 func (r *commentInfoRepo) DecrLikeCount(ctx context.Context, db *gorm.DB, id int64) error {
-	err := db.Model(&model.CommentInfoModel{}).Where("id = ?", id).
+	err := db.Model(&model.CommentInfoModel{}).Where("id = ? AND like_count > 0", id).
 		UpdateColumn("like_count", gorm.Expr("like_count + ?", -1)).
 		UpdateColumn("updated_at", time.Now().Unix()).Error
 	if err != nil {

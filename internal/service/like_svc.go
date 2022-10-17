@@ -24,8 +24,8 @@ const (
 	// LikeTypeComment 评论
 	LikeTypeComment LikeType = 2
 
-	// LikeStatusUnliked 未点赞
-	LikeStatusUnliked LikeStatus = 0
+	// LikeStatusDisliked 未点赞
+	LikeStatusDisliked LikeStatus = 0
 	// LikeStatusLiked 已点赞
 	LikeStatusLiked LikeStatus = 1
 )
@@ -172,7 +172,7 @@ func (s *LikeServiceServer) DeleteLike(ctx context.Context, req *v1.DeleteLikeRe
 		ObjType:   int64(req.GetObjType()),
 		ObjID:     req.GetObjId(),
 		UserID:    req.GetUserId(),
-		Status:    int(LikeStatusUnliked),
+		Status:    int(LikeStatusDisliked),
 		CreatedAt: time.Now().Unix(),
 	}
 	_, err := s.likeRepo.CreateUserLike(ctx, tx, likeData)
