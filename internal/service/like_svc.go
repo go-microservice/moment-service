@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"time"
 
@@ -234,6 +235,27 @@ func (s *LikeServiceServer) GetLike(ctx context.Context, req *v1.GetLikeRequest)
 	}, nil
 }
 
+func (s *LikeServiceServer) BatchGetLike(ctx context.Context, req *v1.BatchGetLikeRequest) (*v1.BatchGetLikeReply, error) {
+	userLikes, err := s.likeRepo.BatchGetUserLike(ctx, req.GetUserId(), req.GetObjType(), req.GetObjIds())
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	data := make(map[int64]int32, 0)
+	for _, val := range userLikes {
+		v, err := convertLike(val)
+		if err != nil {
+			continue
+		}
+		fmt.Println("~~~~~~~~~~~~~~~", v)
+		data[v.ObjId] = v.Status
+	}
+
+	return &v1.BatchGetLikeReply{
+		Data: data,
+	}, nil
+}
+
 func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *v1.ListPostLikeRequest) (*v1.ListLikeReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
@@ -328,6 +350,7 @@ func convertLike(data *model.UserLikeModel) (*v1.Like, error) {
 	// NOTE: 字段大小写不一致时需要手动转换
 	pbLike.Id = data.ID
 	pbLike.UserId = data.UserID
+	pbLike.ObjId = data.ObjID
 
 	return pbLike, nil
 }

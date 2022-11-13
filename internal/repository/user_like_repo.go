@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
@@ -22,7 +21,7 @@ var (
 	_tableUserLikeName    = (&model.UserLikeModel{}).TableName()
 	_createSQL            = "INSERT IGNORE INTO %s SET obj_type=?, obj_id=?, user_id=?, status=?, created_at=? ON duplicate key update status=?"
 	_getUserLikeSQL       = "SELECT user_id, obj_type, obj_id, status FROM %s WHERE user_id=? AND obj_type=? AND obj_id=?"
-	_batchGetUserLikeSQL  = "SELECT * FROM %s WHERE id IN (%s)"
+	_batchGetUserLikeSQL  = "SELECT * FROM %s WHERE user_id=? AND obj_type=? AND obj_id IN (%s)"
 	_listUserLikeByObjSQL = "SELECT * FROM %s WHERE obj_type=? AND obj_id=? AND status=1 and id <=? ORDER BY id DESC limit ?"
 )
 
@@ -33,7 +32,7 @@ type UserLikeRepo interface {
 	CreateUserLike(ctx context.Context, db *gorm.DB, data *model.UserLikeModel) (id int64, err error)
 	UpdateUserLike(ctx context.Context, id int64, data *model.UserLikeModel) error
 	GetUserLike(ctx context.Context, userID, objID int64, objType int32) (ret *model.UserLikeModel, err error)
-	BatchGetUserLike(ctx context.Context, ids []int64) (ret []*model.UserLikeModel, err error)
+	BatchGetUserLike(ctx context.Context, userId int64, objType int32, ids []int64) (ret []*model.UserLikeModel, err error)
 	ListUserLikeByObj(ctx context.Context, objType int32, objID, lastID int64, limit int32) (ret []*model.UserLikeModel, err error)
 }
 
@@ -88,41 +87,15 @@ func (r *userLikeRepo) GetUserLike(ctx context.Context, userID, objID int64, obj
 }
 
 // BatchGetUserLike batch get items
-func (r *userLikeRepo) BatchGetUserLike(ctx context.Context, ids []int64) (ret []*model.UserLikeModel, err error) {
-	// read cache
+func (r *userLikeRepo) BatchGetUserLike(ctx context.Context, userId int64, objType int32, ids []int64) (ret []*model.UserLikeModel, err error) {
 	idsStr := cast.ToStringSlice(ids)
-	itemMap, err := r.cache.MultiGetUserLikeCache(ctx, ids)
+	var userLikes []*model.UserLikeModel
+	_sql := fmt.Sprintf(_batchGetUserLikeSQL, _tableUserLikeName, strings.Join(idsStr, ","))
+	err = r.db.WithContext(ctx).Raw(_sql, userId, objType).Scan(&userLikes).Error
 	if err != nil {
 		return nil, err
 	}
-	var missedID []int64
-	for _, v := range ids {
-		item, ok := itemMap[cast.ToString(v)]
-		if !ok {
-			missedID = append(missedID, v)
-			continue
-		}
-		ret = append(ret, item)
-	}
-	// get missed data
-	if len(missedID) > 0 {
-		var missedData []*model.UserLikeModel
-		_sql := fmt.Sprintf(_batchGetUserLikeSQL, _tableUserLikeName, strings.Join(idsStr, ","))
-		err = r.db.WithContext(ctx).Raw(_sql).Scan(&missedData).Error
-		if err != nil {
-			// you can degrade to ignore error
-			return nil, err
-		}
-		if len(missedData) > 0 {
-			ret = append(ret, missedData...)
-			err = r.cache.MultiSetUserLikeCache(ctx, missedData, 5*time.Minute)
-			if err != nil {
-				// you can degrade to ignore error
-				return nil, err
-			}
-		}
-	}
-	return ret, nil
+	return userLikes, nil
 }
 
 func (r *userLikeRepo) ListUserLikeByObj(ctx context.Context, objType int32, objID, lastID int64, limit int32) (ret []*model.UserLikeModel, err error) {

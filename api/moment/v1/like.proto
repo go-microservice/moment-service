@@ -11,6 +11,7 @@ service LikeService {
 	rpc UpdateLike (UpdateLikeRequest) returns (UpdateLikeReply);
 	rpc DeleteLike (DeleteLikeRequest) returns (DeleteLikeReply);
 	rpc GetLike (GetLikeRequest) returns (GetLikeReply);
+	rpc BatchGetLike (BatchGetLikeRequest) returns (BatchGetLikeReply);
 	rpc ListPostLike (ListPostLikeRequest) returns (ListLikeReply);
 	rpc ListCommentLike (ListCommentLikeRequest) returns (ListLikeReply);
 }
@@ -51,6 +52,16 @@ message GetLikeRequest {
 }
 message GetLikeReply {
 		Like like = 1;
+}
+
+message BatchGetLikeRequest {
+	int64 user_id = 1;
+	int32 obj_type = 2;
+	repeated int64 obj_ids = 3;
+}
+
+message BatchGetLikeReply {
+	map<int64, int32> data = 1;
 }
 
 message ListPostLikeRequest {

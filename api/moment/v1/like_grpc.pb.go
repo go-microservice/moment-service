@@ -26,6 +26,7 @@ type LikeServiceClient interface {
 	UpdateLike(ctx context.Context, in *UpdateLikeRequest, opts ...grpc.CallOption) (*UpdateLikeReply, error)
 	DeleteLike(ctx context.Context, in *DeleteLikeRequest, opts ...grpc.CallOption) (*DeleteLikeReply, error)
 	GetLike(ctx context.Context, in *GetLikeRequest, opts ...grpc.CallOption) (*GetLikeReply, error)
+	BatchGetLike(ctx context.Context, in *BatchGetLikeRequest, opts ...grpc.CallOption) (*BatchGetLikeReply, error)
 	ListPostLike(ctx context.Context, in *ListPostLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error)
 	ListCommentLike(ctx context.Context, in *ListCommentLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error)
 }
@@ -74,6 +75,15 @@ func (c *likeServiceClient) GetLike(ctx context.Context, in *GetLikeRequest, opt
 	return out, nil
 }
 
+func (c *likeServiceClient) BatchGetLike(ctx context.Context, in *BatchGetLikeRequest, opts ...grpc.CallOption) (*BatchGetLikeReply, error) {
+	out := new(BatchGetLikeReply)
+	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/BatchGetLike", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *likeServiceClient) ListPostLike(ctx context.Context, in *ListPostLikeRequest, opts ...grpc.CallOption) (*ListLikeReply, error) {
 	out := new(ListLikeReply)
 	err := c.cc.Invoke(ctx, "/api.moment.v1.LikeService/ListPostLike", in, out, opts...)
@@ -100,6 +110,7 @@ type LikeServiceServer interface {
 	UpdateLike(context.Context, *UpdateLikeRequest) (*UpdateLikeReply, error)
 	DeleteLike(context.Context, *DeleteLikeRequest) (*DeleteLikeReply, error)
 	GetLike(context.Context, *GetLikeRequest) (*GetLikeReply, error)
+	BatchGetLike(context.Context, *BatchGetLikeRequest) (*BatchGetLikeReply, error)
 	ListPostLike(context.Context, *ListPostLikeRequest) (*ListLikeReply, error)
 	ListCommentLike(context.Context, *ListCommentLikeRequest) (*ListLikeReply, error)
 	mustEmbedUnimplementedLikeServiceServer()
@@ -120,6 +131,9 @@ func (UnimplementedLikeServiceServer) DeleteLike(context.Context, *DeleteLikeReq
 }
 func (UnimplementedLikeServiceServer) GetLike(context.Context, *GetLikeRequest) (*GetLikeReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLike not implemented")
+}
+func (UnimplementedLikeServiceServer) BatchGetLike(context.Context, *BatchGetLikeRequest) (*BatchGetLikeReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchGetLike not implemented")
 }
 func (UnimplementedLikeServiceServer) ListPostLike(context.Context, *ListPostLikeRequest) (*ListLikeReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPostLike not implemented")
@@ -212,6 +226,24 @@ func _LikeService_GetLike_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LikeService_BatchGetLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchGetLikeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LikeServiceServer).BatchGetLike(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.moment.v1.LikeService/BatchGetLike",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LikeServiceServer).BatchGetLike(ctx, req.(*BatchGetLikeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LikeService_ListPostLike_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListPostLikeRequest)
 	if err := dec(in); err != nil {
@@ -270,6 +302,10 @@ var LikeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLike",
 			Handler:    _LikeService_GetLike_Handler,
+		},
+		{
+			MethodName: "BatchGetLike",
+			Handler:    _LikeService_BatchGetLike_Handler,
 		},
 		{
 			MethodName: "ListPostLike",
