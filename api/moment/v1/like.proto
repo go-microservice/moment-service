@@ -49,7 +49,9 @@ message GetLikeRequest {
 	int32 obj_type = 2;
 	int64 obj_id = 3;
 }
-message GetLikeReply {}
+message GetLikeReply {
+		Like like = 1;
+}
 
 message ListPostLikeRequest {
 	int64 user_id = 1;

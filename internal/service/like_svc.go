@@ -216,7 +216,22 @@ func hasLiked(data *model.UserLikeModel) bool {
 }
 
 func (s *LikeServiceServer) GetLike(ctx context.Context, req *v1.GetLikeRequest) (*v1.GetLikeReply, error) {
-	return &v1.GetLikeReply{}, nil
+	if req.GetUserId() == 0 || req.GetObjId() == 0 || req.GetObjType() == 0 {
+		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
+	}
+	userLike, err := s.likeRepo.GetUserLike(ctx, req.GetUserId(), req.GetObjId(), req.GetObjType())
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	userLikePb, err := convertLike(userLike)
+	if err != nil {
+		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
+	}
+
+	return &v1.GetLikeReply{
+		Like: userLikePb,
+	}, nil
 }
 
 func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *v1.ListPostLikeRequest) (*v1.ListLikeReply, error) {
