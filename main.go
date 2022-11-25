@@ -18,6 +18,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-eagle/eagle/pkg/trace"
+
 	"github.com/gin-gonic/gin"
 	eagle "github.com/go-eagle/eagle/pkg/app"
 	"github.com/go-eagle/eagle/pkg/client/consulclient"
@@ -78,6 +80,15 @@ func main() {
 	redis.Init()
 
 	gin.SetMode(cfg.Mode)
+
+	if cfg.EnableTrace {
+		var traceCfg trace.Config
+		err := config.Load("trace", &traceCfg)
+		_, err = trace.InitTracerProvider(traceCfg.ServiceName, traceCfg.CollectorEndpoint)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	// init pprof server
 	go func() {
