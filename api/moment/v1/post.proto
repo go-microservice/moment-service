@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package api.moment.v1;
 
+import "google/protobuf/struct.proto";
+
 option go_package = "github.com/go-microservice/moment-service/api/moment/v1;v1";
 option java_multiple_files = true;
 option java_package = "api.moment.v1";
@@ -25,7 +27,7 @@ message Post {
 	int32 post_type = 2;
 	int64 user_id = 3;
 	string title = 4;
-	string content = 5;
+	google.protobuf.Struct content = 5;
 	int64 view_count = 6;
 	int64 like_count = 7;
 	int64 comment_count = 8;
@@ -41,11 +43,19 @@ message Post {
 	int64 deleted_at = 18;
 }
 
+message PostImage {
+	string image_key = 1;
+	string image_type = 2;
+	int32 width = 3;
+	int32 height = 4;
+}
+
 message CreatePostRequest {
 	int64 user_id = 1;
 	string title = 2;
 	string text = 3;
-	string pic_keys = 4;
+	// json格式：[{"image_key":"/abc/a.jpg","image_type":"jpg","width":200,"height":200}]
+	repeated PostImage images = 4;
 	string video_key = 5;
 	int32 video_duration = 6;
 	string cover_key = 7;

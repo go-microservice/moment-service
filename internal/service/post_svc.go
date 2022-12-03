@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strings"
 	"sync"
 	"time"
+
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/go-eagle/eagle/pkg/errcode"
 	"github.com/go-eagle/eagle/pkg/log"
@@ -78,7 +79,7 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *v1.CreatePostRe
 		content  string
 	)
 	postType = getPostType(req)
-	content, err = getContent(postType, req)
+	content, err = getPostContent(postType, req)
 	if err != nil {
 		return nil, err
 	}
@@ -170,12 +171,12 @@ func checkPostParam(req *v1.CreatePostRequest) error {
 			"msg": errors.New("user_id is empty"),
 		})).Status(req).Err()
 	}
-	if len(req.Text) == 0 && len(req.PicKeys) == 0 && len(req.VideoKey) == 0 {
+	if len(req.Text) == 0 && len(req.Images) == 0 && len(req.VideoKey) == 0 {
 		return ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 			"msg": errors.New("param is empty"),
 		})).Status(req).Err()
 	}
-	if len(req.PicKeys) > 0 && len(req.VideoKey) > 0 {
+	if len(req.Images) > 0 && len(req.VideoKey) > 0 {
 		return ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 			"msg": errors.New("pic_keys and video_key is error"),
 		})).Status(req).Err()
@@ -193,7 +194,7 @@ func checkPostParam(req *v1.CreatePostRequest) error {
 }
 
 func getPostType(req *v1.CreatePostRequest) PostType {
-	if len(req.PicKeys) > 0 {
+	if len(req.Images) > 0 {
 		return PostTypeImage
 	} else if len(req.VideoKey) > 0 {
 		return PostTypeVideo
@@ -204,16 +205,16 @@ func getPostType(req *v1.CreatePostRequest) PostType {
 	return PostTypeUnknown
 }
 
-func getContent(postType PostType, req *v1.CreatePostRequest) (string, error) {
+func getPostContent(postType PostType, req *v1.CreatePostRequest) (string, error) {
 	data := make(map[string]interface{})
 	switch postType {
 	case PostTypeText:
 		data["text"] = req.Text
 	case PostTypeImage:
-		// TODO: add width and height
-		pics := strings.Split(req.PicKeys, ",")
-		data["pic"] = pics
+		data["text"] = req.Text
+		data["images"] = req.Images
 	case PostTypeVideo:
+		data["text"] = req.Text
 		data["video"] = map[string]interface{}{
 			"video_key":    req.VideoKey,
 			"duration":     req.VideoDuration,
@@ -228,7 +229,7 @@ func getContent(postType PostType, req *v1.CreatePostRequest) (string, error) {
 	}
 	content, err := json.Marshal(data)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "getPostContent Marshal error")
 	}
 	return string(content), nil
 }
@@ -521,45 +522,89 @@ func convertPost(p *model.PostInfoModel) (*v1.Post, error) {
 
 	// NOTE: 字段大小写不一致时需要手动转换
 	pbPost.Id = p.ID
-	pbPost.Content, err = convertContent(p)
+	pbPost.Content, err = convertPostContent(p)
 	if err != nil {
 		return nil, err
 	}
 	return pbPost, nil
 }
 
-func convertContent(p *model.PostInfoModel) (string, error) {
+type PostText struct {
+	Text string `json:"text"`
+}
+
+type PostImage struct {
+	Text   string `json:"text"`
+	Images []struct {
+		ImageKey  string `json:"image_key"`
+		ImageType string `json:"image_type"`
+		Width     int32  `json:"width"`
+		Height    int32  `json:"height"`
+	} `json:"images"`
+}
+
+type PostVideo struct {
+	Text        string `json:"text"`
+	VideoKey    string `json:"video_key"`
+	Duration    int    `json:"duration"`
+	CoverKey    string `json:"cover_key"`
+	CoverWidth  int    `json:"cover_width"`
+	CoverHeight int    `json:"cover_height"`
+}
+
+// see: https://pkg.go.dev/google.golang.org/protobuf/types/known/structpb?utm_source=godoc#pkg-overview
+func convertPostContent(p *model.PostInfoModel) (ret *structpb.Struct, err error) {
 	if len(p.Content) == 0 {
-		return "", nil
+		return nil, nil
 	}
 
-	rawContent := make(map[string]interface{})
-	err := json.Unmarshal([]byte(p.Content), &rawContent)
-	if err != nil {
-		return "", err
-	}
-
-	data := make(map[string]interface{})
+	item := make(map[string]interface{})
 	postType := PostType(p.PostType)
 	switch postType {
 	case PostTypeText:
-		data["text"] = rawContent["text"]
+		var postText PostText
+		err = json.Unmarshal([]byte(p.Content), &postText)
+		if err != nil {
+			return nil, errors.Wrap(err, "convertPostContent Unmarshal text error")
+		}
+		item["text"] = postText.Text
 	case PostTypeImage:
-		data["pic"] = rawContent["pic"]
+		var postImage PostImage
+		err = json.Unmarshal([]byte(p.Content), &postImage)
+		if err != nil {
+			return nil, errors.Wrap(err, "convertPostContent Unmarshal image error")
+		}
+		item["text"] = postImage.Text
+		var images []interface{}
+		for _, v := range postImage.Images {
+			images = append(images, map[string]interface{}{
+				"image_url":  v.ImageKey,
+				"image_type": v.ImageType,
+				"width":      v.Width,
+				"height":     v.Height,
+			})
+		}
+		item["images"] = images
 	case PostTypeVideo:
-		vContent := rawContent["video"].(map[string]interface{})
-		data["video"] = map[string]interface{}{
-			"video_url":    vContent["video_key"],
-			"duration":     vContent["duration"],
-			"cover_url":    vContent["cover_key"],
-			"cover_width":  vContent["cover_width"],
-			"cover_height": vContent["cover_height"],
+		var postVideo PostVideo
+		err = json.Unmarshal([]byte(p.Content), &postVideo)
+		if err != nil {
+			return nil, errors.Wrap(err, "convertPostContent Unmarshal video error")
+		}
+		item["text"] = postVideo.Text
+		item["video"] = map[string]interface{}{
+			"video_url":    postVideo.VideoKey,
+			"duration":     postVideo.Duration,
+			"cover_url":    postVideo.CoverKey,
+			"cover_width":  postVideo.CoverWidth,
+			"cover_height": postVideo.CoverHeight,
 		}
 	}
 
-	content, err := json.Marshal(data)
+	data, err := structpb.NewStruct(item)
 	if err != nil {
-		return "", err
+		return nil, errors.Wrap(err, "convertPostContent NewValue error")
 	}
-	return string(content), nil
+
+	return data, nil
 }
