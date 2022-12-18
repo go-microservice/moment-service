@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package api.moment.v1;
 
-import "google/protobuf/struct.proto";
-
 option go_package = "github.com/go-microservice/moment-service/api/moment/v1;v1";
 option java_multiple_files = true;
 option java_package = "api.moment.v1";
@@ -27,7 +25,7 @@ message Post {
 	int32 post_type = 2;
 	int64 user_id = 3;
 	string title = 4;
-	google.protobuf.Struct content = 5;
+	Content content = 5;
 	int64 view_count = 6;
 	int64 like_count = 7;
 	int64 comment_count = 8;
@@ -43,11 +41,28 @@ message Post {
 	int64 deleted_at = 18;
 }
 
+message Content {
+	string text = 1;
+	repeated PostImage images = 2;
+	Video video = 3;
+}
+
 message PostImage {
 	string image_key = 1;
-	string image_type = 2;
-	int32 width = 3;
-	int32 height = 4;
+	string image_url = 2;
+	string image_type = 3;
+	int32 width = 4;
+	int32 height = 5;
+}
+
+message Video {
+	string video_key = 1;
+	string video_url = 2;
+	string cover_key = 3;
+	string cover_url = 4;
+	float duration = 5;
+	int32 width = 6;
+	int32 height = 7;
 }
 
 message CreatePostRequest {
@@ -56,15 +71,12 @@ message CreatePostRequest {
 	string text = 3;
 	// json格式：[{"image_key":"/abc/a.jpg","image_type":"jpg","width":200,"height":200}]
 	repeated PostImage images = 4;
-	string video_key = 5;
-	int32 video_duration = 6;
-	string cover_key = 7;
-	int32 cover_width = 8;
-	int32 cover_height = 9;
-	float longitude = 10;
-	float latitude = 11;
-	string position = 12;
+	Video video = 5;
+	string position = 6;
+	float longitude = 7;
+	float latitude = 8;
 }
+
 message CreatePostReply {
 	Post post = 1;
 }
