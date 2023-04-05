@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-microservice/moment-service/internal/tasks"
+
 	"github.com/go-eagle/eagle/pkg/errcode"
 	"github.com/go-eagle/eagle/pkg/log"
 	"github.com/jinzhu/copier"
@@ -141,6 +143,15 @@ func (s *PostServiceServer) CreatePost(ctx context.Context, req *v1.CreatePostRe
 		CreatedAt: createTime,
 	}
 	_, err = s.userPostRepo.CreateUserPost(ctx, tx, userPostData)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = tasks.NewPublishPostTask(tasks.PublishPostPayload{
+		PostID:    postID,
+		AnchorUID: req.UserId,
+	})
 	if err != nil {
 		tx.Rollback()
 		return nil, err

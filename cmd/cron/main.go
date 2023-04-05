@@ -84,7 +84,8 @@ func main() {
 		// mux maps a type to a handler
 		mux := asynq.NewServeMux()
 		// register handlers...
-		mux.HandleFunc(tasks.TypeEmailWelcome, tasks.HandleEmailWelcomeTask)
+		mux.HandleFunc(tasks.TypePublishPost, tasks.HandlePublishPostTask)
+		mux.HandleFunc(tasks.TypeDispatchPost, tasks.HandleDispatchPostTask)
 
 		if err := srv.Run(mux); err != nil {
 			log.Fatalf("could not run server: %v", err)
