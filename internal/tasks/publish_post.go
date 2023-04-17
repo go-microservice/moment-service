@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/go-microservice/moment-service/internal/repository"
+	relationV1 "github.com/go-microservice/relation-service/api/relation/v1"
+
 	"github.com/go-eagle/eagle/pkg/log"
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
@@ -42,22 +45,57 @@ func HandlePublishPostTask(ctx context.Context, t *asynq.Task) error {
 	var p PublishPostPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		log.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
+		return err
 	}
 
-	// TODO: 从关系服务获取粉丝用户，然后写入到分发队列
-	// 1. 拉取用户的粉丝列表
-	followerUIDs := make([]int64, 0)
+	relationClient := repository.NewRelationClient()
 
-	// 2. 遍历粉丝数据并写入到分发队列里
-	for _, uid := range followerUIDs {
-		data := DispatchPostPayload{
-			UserID: uid,
-			PostID: p.PostID,
+	var (
+		hasMore int32
+		lastId  int64
+		limit   int32 = 20
+	)
+
+	// 从关系服务获取粉丝用户，然后写入到分发队列
+	for {
+		// 1. 拉取用户的粉丝列表
+		followerUIDs := make([]int64, 0)
+		in := &relationV1.FollowerListRequest{
+			UserId: p.AnchorUID,
+			LastId: lastId,
+			Limit:  limit + 1,
 		}
-		err := NewDispatchPostTask(data)
+		ret, err := relationClient.GetFollowerList(ctx, in)
 		if err != nil {
-			log.Errorf("NewDispatchPostTask failed, err:%v, data: %w", err, asynq.SkipRetry)
-			continue
+			log.Errorf("GetFollowerList in: %v, error: %v: %w", in, err, asynq.SkipRetry)
+			return err
+		}
+
+		relationRet := ret.GetResult()
+		if int32(len(relationRet)) > limit {
+			hasMore = 1
+			lastId = relationRet[len(relationRet)-1].Id
+			relationRet = relationRet[0 : len(relationRet)-1]
+		}
+		for _, v := range relationRet {
+			followerUIDs = append(followerUIDs, v.GetFollowerUid())
+		}
+
+		// 2. 遍历粉丝数据并写入到分发队列里
+		for _, uid := range followerUIDs {
+			data := DispatchPostPayload{
+				UserID: uid,
+				PostID: p.PostID,
+			}
+			err := NewDispatchPostTask(data)
+			if err != nil {
+				log.Errorf("NewDispatchPostTask failed, err:%v, data: %w", err, asynq.SkipRetry)
+				continue
+			}
+		}
+
+		if hasMore == 0 {
+			break
 		}
 	}
 

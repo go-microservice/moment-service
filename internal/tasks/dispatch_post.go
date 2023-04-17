@@ -3,6 +3,10 @@ package tasks
 import (
 	"context"
 	"encoding/json"
+	"time"
+
+	"github.com/go-microservice/moment-service/internal/model"
+	"github.com/go-microservice/moment-service/internal/repository"
 
 	"github.com/hibiken/asynq"
 
@@ -43,12 +47,22 @@ func HandleDispatchPostTask(ctx context.Context, t *asynq.Task) error {
 	var p DispatchPostPayload
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		log.Errorf("json.Unmarshal failed: %v: %w", err, asynq.SkipRetry)
+		return err
 	}
 
-	// TODO: 将发布队列的数据写入到粉丝post
-	// 1. 从队列拉取数据
-
-	// 2. 将数据批量写入db
+	// 将发布队列的数据写入到粉丝post
+	repo := repository.NewUserPost(model.GetDB())
+	data := &model.UserPostModel{
+		UserID:    p.UserID,
+		PostID:    p.PostID,
+		DelFlag:   0,
+		CreatedAt: time.Now().Unix(),
+	}
+	_, err := repo.CreateUserPost(ctx, model.GetDB(), data)
+	if err != nil {
+		log.Errorf("CreateUserPost failed, data: %v, error: %v", err)
+		return err
+	}
 
 	return nil
 }
