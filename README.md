@@ -7,7 +7,7 @@
 - comment
 - like
 
-## 运行
+## Run
 
 ```bash
 go build
