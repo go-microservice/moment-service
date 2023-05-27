@@ -64,37 +64,9 @@ func main() {
 		panic(err)
 	}
 
-	// -------------- Run worker server ------------
-	go func() {
-		srv := asynq.NewServer(
-			asynq.RedisClientOpt{Addr: cfg.Addr},
-			asynq.Config{
-				// Specify how many concurrent workers to use
-				Concurrency: cfg.Concurrency,
-				// Optionally specify multiple queues with different priority.
-				Queues: map[string]int{
-					tasks.QueueCritical: 6,
-					tasks.QueueDefault:  3,
-					tasks.QueueLow:      1,
-				},
-				// See the godoc for other configuration options
-			},
-		)
-
-		// mux maps a type to a handler
-		mux := asynq.NewServeMux()
-		// register handlers...
-		mux.HandleFunc(tasks.TypePublishPost, tasks.HandlePublishPostTask)
-		mux.HandleFunc(tasks.TypeDispatchPost, tasks.HandleDispatchPostTask)
-
-		if err := srv.Run(mux); err != nil {
-			log.Fatalf("could not run server: %v", err)
-		}
-	}()
-
 	// ------------- Run schedule server ------------
 	scheduler := asynq.NewScheduler(
-		asynq.RedisClientOpt{Addr: cfg.Addr},
+		asynq.RedisClientOpt{Addr: cfg.Redis.Addr},
 		&asynq.SchedulerOpts{Location: time.Local},
 	)
 
