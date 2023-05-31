@@ -26,3 +26,4 @@ go build
 
 - https://medium.com/@leoantony102/how-i-made-twitter-back-end-57addbaa14f5
 - https://mp.weixin.qq.com/s/ov1UPkhjIti0QuHdxm2t9Q
+- https://dsysd-dev.medium.com/stop-using-dtos-in-go-its-not-java-96ef4794481a
