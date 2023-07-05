@@ -21,6 +21,16 @@ service PostService {
 }
 
 message Post {
+	enum DEL_FLAG {
+    		DEL_FLAG_UNSPECIFIED = 0;
+      		DEL_FLAG_USER = 1;  // user self delete
+		DEL_FLAG_ADMIN = 2; // admin delete
+  	}
+	enum VISIBLE {
+    		VISIBLE_UNSPECIFIED = 0;
+      		VISIBLE_ALL = 1;  // everyone can see
+		VISIBLE_ONLYSELF = 2; // only self see
+  	}
 	int64 id = 1;
 	int32 post_type = 2;
 	int64 user_id = 3;
@@ -31,11 +41,11 @@ message Post {
 	int64 comment_count = 8;
 	int64 collect_count = 9;
 	int64 share_count = 10;
-	int32 del_flag = 11;
-	int32 visible = 12;
+	DEL_FLAG del_flag = 11;
+	VISIBLE visible = 12;
 	float longitude = 13;
 	float latitude = 14;
-	float position = 15;
+	string position = 15;
 	int64 created_at = 16;
 	int64 updated_at = 17;
 	int64 deleted_at = 18;
@@ -109,34 +119,28 @@ message BatchGetPostReply {
 
 message ListMyPostRequest {
 	int64 user_id = 1;
-	int64 last_id = 2;
-	int32 limit = 3;
+	int32 page_size = 2;
+	string page_token = 3;
 }
 message ListMyPostReply {
-	repeated Post items = 1;
-	int64 count = 2;
-	bool has_more = 3;
-	int64 last_id = 4;
+	repeated Post posts = 1;
+	string next_page_token = 2;
 }
 
 message ListLatestPostRequest {
-	int64 last_id = 1;
-	int32 limit = 2;
+	int32 page_size = 1;
+	string page_token = 2;
 }
 message ListLatestPostReply {
-	repeated Post items = 1;
-	int64 count = 2;
-	bool has_more = 3;
-	int64 last_id = 4;
+	repeated Post posts = 1;
+	string next_page_token = 2;
 }
 
 message ListHotPostRequest {
-	int64 last_id = 1;
-	int32 limit = 2;
+	int32 page_size = 1;
+	string page_token = 2;
 }
 message ListHotPostReply {
-	repeated Post items = 1;
-	int64 count = 2;
-	bool has_more = 3;
-	int64 last_id = 4;
+	repeated Post posts = 1;
+	string next_page_token = 2;
 }
