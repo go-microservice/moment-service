@@ -17,3 +17,4 @@
 vendor/
 log
 moment-service
+cmd/consumer/consumer
