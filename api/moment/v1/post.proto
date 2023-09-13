@@ -22,16 +22,16 @@ service PostService {
 
 message Post {
 	enum DEL_FLAG {
-    		DEL_FLAG_UNSPECIFIED = 0;
-            	DEL_FLAG_NORMAL = 1;  // normal status
-      		DEL_FLAG_USER = 2;  // user self delete
+		DEL_FLAG_UNSPECIFIED = 0;
+		DEL_FLAG_NORMAL = 1;  // normal status
+		DEL_FLAG_USER = 2;  // user self delete
 		DEL_FLAG_ADMIN = 3; // admin delete
-  	}
+	}
 	enum VISIBLE {
-    		VISIBLE_UNSPECIFIED = 0;
-      		VISIBLE_ALL = 1;  // everyone can see
+		VISIBLE_UNSPECIFIED = 0;
+		VISIBLE_ALL = 1;  // everyone can see
 		VISIBLE_ONLYSELF = 2; // only self see
-  	}
+	}
 	int64 id = 1;
 	int32 post_type = 2;
 	int64 user_id = 3;

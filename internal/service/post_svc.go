@@ -8,17 +8,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-microservice/moment-service/internal/tasks"
-
 	"github.com/go-eagle/eagle/pkg/errcode"
 	"github.com/go-eagle/eagle/pkg/log"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
+	"github.com/spf13/cast"
 
 	v1 "github.com/go-microservice/moment-service/api/moment/v1"
 	"github.com/go-microservice/moment-service/internal/ecode"
 	"github.com/go-microservice/moment-service/internal/model"
 	"github.com/go-microservice/moment-service/internal/repository"
+	"github.com/go-microservice/moment-service/internal/tasks"
 )
 
 type PostType int
@@ -26,7 +26,7 @@ type DeleteType int
 type VisibleType int
 
 const (
-	// Post 类型
+	// PostTypeUnknown Post 类型
 	PostTypeUnknown PostType = 0 // 未知
 	PostTypeText    PostType = 1 // 文本
 	PostTypeImage   PostType = 2 // 图片
@@ -224,7 +224,7 @@ func getPostContent(postType PostType, req *v1.CreatePostRequest) (string, error
 		data["images"] = req.GetImages()
 	case PostTypeVideo:
 		video := req.Video
-		data["text"] = req.Text
+		data["text"] = req.GetText()
 		data["video"] = map[string]interface{}{
 			"video_key": video.GetVideoKey(),
 			"duration":  video.GetDuration(),
@@ -261,7 +261,7 @@ func (s *PostServiceServer) DeletePost(ctx context.Context, req *v1.DeletePostRe
 		return nil, err
 	}
 
-	// check if has delete permission
+	// check if it has permission
 	if req.GetUserId() != post.GetPost().UserId {
 		return nil, ecode.ErrAccessDenied.WithDetails().Status(req).Err()
 	}
@@ -400,26 +400,24 @@ func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *v1.BatchGetPo
 }
 
 func (s *PostServiceServer) ListMyPost(ctx context.Context, req *v1.ListMyPostRequest) (*v1.ListMyPostReply, error) {
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageToken() == "" {
+		req.PageToken = cast.ToString(math.MaxInt64)
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
 
 	// get user posts
-	userPosts, err := s.userPostRepo.GetUserPostByUserId(ctx, req.GetUserId(), req.GetLastId(), req.GetLimit()+1)
+	userPosts, err := s.userPostRepo.GetUserPostByUserId(ctx, req.GetUserId(), cast.ToInt64(req.GetPageToken()), req.GetPageSize()+1)
 	if err != nil {
 		return nil, err
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken string
 	)
-	if len(userPosts) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = userPosts[len(userPosts)-1].ID
+	if len(userPosts) > int(req.GetPageSize()) {
+		nextPageToken = cast.ToString(userPosts[len(userPosts)-1].ID)
 		userPosts = userPosts[:len(userPosts)-1]
 	}
 
@@ -434,34 +432,30 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *v1.ListMyPostRe
 	}
 
 	return &v1.ListMyPostReply{
-		Items:   posts.GetPosts(),
-		Count:   int64(len(posts.GetPosts())),
-		HasMore: hasMore,
-		LastId:  lastId,
+		Posts:         posts.GetPosts(),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 
 func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *v1.ListLatestPostRequest) (*v1.ListLatestPostReply, error) {
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageToken() == "" {
+		req.PageToken = cast.ToString(math.MaxInt64)
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
 
 	// get latest posts
-	latestPosts, err := s.latestRepo.GetLatestPostList(ctx, req.GetLastId(), req.GetLimit()+1)
+	latestPosts, err := s.latestRepo.GetLatestPostList(ctx, cast.ToInt64(req.GetPageToken()), req.GetPageSize()+1)
 	if err != nil {
 		return nil, err
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken string
 	)
-	if len(latestPosts) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = latestPosts[len(latestPosts)-1].PostID
+	if len(latestPosts) > int(req.GetPageSize()) {
+		nextPageToken = cast.ToString(latestPosts[len(latestPosts)-1].PostID)
 		latestPosts = latestPosts[:len(latestPosts)-1]
 	}
 
@@ -476,34 +470,30 @@ func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *v1.ListLate
 	}
 
 	return &v1.ListLatestPostReply{
-		Items:   posts.GetPosts(),
-		Count:   int64(len(posts.GetPosts())),
-		HasMore: hasMore,
-		LastId:  lastId,
+		Posts:         posts.GetPosts(),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 
 func (s *PostServiceServer) ListHotPost(ctx context.Context, req *v1.ListHotPostRequest) (*v1.ListHotPostReply, error) {
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageToken() == "" {
+		req.PageToken = cast.ToString(math.MaxInt64)
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
 
 	// get hot posts
-	hotPosts, err := s.hotRepo.GetHotPostList(ctx, req.GetLastId(), req.GetLimit()+1)
+	hotPosts, err := s.hotRepo.GetHotPostList(ctx, cast.ToInt64(req.GetPageToken()), req.GetPageSize()+1)
 	if err != nil {
 		return nil, err
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken string
 	)
-	if len(hotPosts) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = hotPosts[len(hotPosts)-1].PostID
+	if len(hotPosts) > int(req.GetPageSize()) {
+		nextPageToken = cast.ToString(hotPosts[len(hotPosts)-1].PostID)
 		hotPosts = hotPosts[:len(hotPosts)-1]
 	}
 
@@ -518,10 +508,8 @@ func (s *PostServiceServer) ListHotPost(ctx context.Context, req *v1.ListHotPost
 	}
 
 	return &v1.ListHotPostReply{
-		Items:   posts.GetPosts(),
-		Count:   int64(len(posts.GetPosts())),
-		HasMore: hasMore,
-		LastId:  lastId,
+		Posts:         posts.GetPosts(),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 

@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cast"
 
 	rdb "github.com/go-eagle/eagle/pkg/redis"
-	"github.com/go-redis/redis/v8"
+	redis "github.com/redis/go-redis/v9"
 )
 
 const (
@@ -53,7 +53,7 @@ func (c *commentIndexCache) SetCommentIndexCache(ctx context.Context, objID int6
 
 	cacheKey := c.GetCommentIndexCacheKey(objID, objType, sortType)
 	pipe := c.cache.Pipeline()
-	err := pipe.ZAdd(ctx, cacheKey, &redis.Z{
+	err := pipe.ZAdd(ctx, cacheKey, redis.Z{
 		Score:  score,
 		Member: commentID,
 	}).Err()
@@ -108,7 +108,8 @@ func (c *commentIndexCache) GetListCommentIndexCache(ctx context.Context, objID 
 }
 
 // MultiSetCommentIndexCache batch set cache
-func (c *commentIndexCache) MultiSetCommentIndexCache(ctx context.Context, objID int64, objType int, sortType int, cmtIDs []int64, scores []float64, duration time.Duration) error {
+func (c *commentIndexCache) MultiSetCommentIndexCache(ctx context.Context, objID int64, objType int, sortType int,
+	cmtIDs []int64, scores []float64, duration time.Duration) error {
 	if objID == 0 {
 		return errors.New("objID is empty")
 	}
@@ -123,9 +124,9 @@ func (c *commentIndexCache) MultiSetCommentIndexCache(ctx context.Context, objID
 	}
 
 	cacheKey := c.GetCommentIndexCacheKey(objID, objType, sortType)
-	var data []*redis.Z
+	var data []redis.Z
 	for k, v := range cmtIDs {
-		data = append(data, &redis.Z{
+		data = append(data, redis.Z{
 			Score:  scores[k],
 			Member: v,
 		})

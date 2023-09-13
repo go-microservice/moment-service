@@ -46,3 +46,7 @@ proto 文件存放位置
 `go run main.go`
 
 grpc即可正常启动
+
+## Reference
+
+- https://google.aip.dev/158

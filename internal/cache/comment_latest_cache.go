@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-eagle/eagle/pkg/log"
 	rdb "github.com/go-eagle/eagle/pkg/redis"
-	"github.com/go-redis/redis/v8"
+	redis "github.com/redis/go-redis/v9"
 
 	"github.com/go-microservice/moment-service/internal/model"
 )
