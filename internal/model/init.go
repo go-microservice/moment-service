@@ -15,20 +15,20 @@ var (
 )
 
 // Init init db
-func Init() *gorm.DB {
+func Init() (*gorm.DB, func()) {
 	cfg, err := loadConf()
 	if err != nil {
 		panic(fmt.Sprintf("load orm conf err: %v", err))
 	}
 
-	DB = orm.NewMySQL(cfg)
-	return DB
+	DB, cleanup := orm.NewMySQL(cfg)
+	return DB, cleanup
 }
 
 // GetDB get a db instance
 func GetDB() *gorm.DB {
 	Once.Do(func() {
-		DB = Init()
+		DB, _ = Init()
 	})
 	return DB
 }

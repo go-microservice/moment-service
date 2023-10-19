@@ -22,9 +22,10 @@ import (
 // Injectors from wire.go:
 
 func InitApp(cfg *app.Config, config *app.ServerConfig) (*app.App, func(), error) {
-	db := model.Init()
-	client, cleanup, err := redis.Init()
+	db, cleanup := model.Init()
+	client, cleanup2, err := redis.Init()
 	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
 	postInfoCache := cache.NewPostInfoCache(client)
@@ -50,6 +51,7 @@ func InitApp(cfg *app.Config, config *app.ServerConfig) (*app.App, func(), error
 	grpcServer := server.NewGRPCServer(config, postServiceServer, commentServiceServer, likeServiceServer)
 	appApp := newApp(cfg, grpcServer)
 	return appApp, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

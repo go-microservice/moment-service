@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-eagle/eagle v1.8.0
+	github.com/go-eagle/eagle v1.8.1-0.20231019134234-ca7de6e717c5
 	github.com/go-microservice/relation-service v0.0.0-20220615144835-aa0a69fbee93
 	github.com/google/wire v0.5.0
 	github.com/hibiken/asynq v0.23.0

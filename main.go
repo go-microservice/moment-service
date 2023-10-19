@@ -33,7 +33,6 @@ import (
 	"github.com/spf13/pflag"
 	_ "go.uber.org/automaxprocs"
 
-	"github.com/go-microservice/moment-service/internal/model"
 	"github.com/go-microservice/moment-service/internal/server"
 )
 
@@ -74,8 +73,6 @@ func main() {
 
 	// -------------- init resource -------------
 	logger.Init()
-	// init db
-	model.Init()
 	// init redis
 	_, _, err := redis.Init()
 	if err != nil {

@@ -1,7 +1,7 @@
 
 ## 2023-10-19
 
-- 增加清理函数 cleanup(main.go)
+- 增加清理函数 cleanup, 主要针对redis和db
 - cache中的redis客户端使用注入的方式代替使用全局变量
 - 优化router, 文档路由和pprof增加开关控制
 - 增加更多注释(post)
