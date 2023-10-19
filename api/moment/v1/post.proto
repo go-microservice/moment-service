@@ -6,11 +6,17 @@ option go_package = "github.com/go-microservice/moment-service/api/moment/v1;v1"
 option java_multiple_files = true;
 option java_package = "api.moment.v1";
 
+// 帖子服务
 service PostService {
+	// 创建帖子
 	rpc CreatePost (CreatePostRequest) returns (CreatePostReply);
+	// 更新帖子，暂时不提供
 	rpc UpdatePost (UpdatePostRequest) returns (UpdatePostReply);
+	// 删除帖子
 	rpc DeletePost (DeletePostRequest) returns (DeletePostReply);
+	// 根据id获取指定帖子
 	rpc GetPost (GetPostRequest) returns (GetPostReply);
+	// 批量获取帖子
 	rpc BatchGetPost (BatchGetPostRequest) returns (BatchGetPostReply);
 	// 我发布过的帖子列表
 	rpc ListMyPost (ListMyPostRequest) returns (ListMyPostReply);
@@ -30,17 +36,17 @@ message Post {
 	enum VISIBLE {
 		VISIBLE_UNSPECIFIED = 0;
 		VISIBLE_ALL = 1;  // everyone can see
-		VISIBLE_ONLYSELF = 2; // only self see
+		VISIBLE_SELF = 2; // only self see
 	}
 	int64 id = 1;
-	int32 post_type = 2;
-	int64 user_id = 3;
-	string title = 4;
-	Content content = 5;
-	int64 view_count = 6;
-	int64 like_count = 7;
-	int64 comment_count = 8;
-	int64 collect_count = 9;
+	int32 post_type = 2; // post type
+	int64 user_id = 3; // user id
+	string title = 4; // post title
+	Content content = 5; // post content, json format
+	int64 view_count = 6; // view count
+	int64 like_count = 7; // like count
+	int64 comment_count = 8; // comment count
+	int64 collect_count = 9; // collect count
 	int64 share_count = 10;
 	DEL_FLAG del_flag = 11;
 	VISIBLE visible = 12;
@@ -52,12 +58,14 @@ message Post {
 	int64 deleted_at = 18;
 }
 
+// 帖子内容结构
 message Content {
 	string text = 1;
-	repeated PostImage images = 2;
-	Video video = 3;
+	repeated PostImage images = 2; // image content
+	Video video = 3; // video content
 }
 
+// 图片内容
 message PostImage {
 	string image_key = 1;
 	string image_url = 2;
@@ -66,6 +74,7 @@ message PostImage {
 	int32 height = 5;
 }
 
+// 视频内容
 message Video {
 	string video_key = 1;
 	string video_url = 2;

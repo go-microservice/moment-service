@@ -77,7 +77,10 @@ func main() {
 	// init db
 	model.Init()
 	// init redis
-	redis.Init()
+	_, _, err := redis.Init()
+	if err != nil {
+		panic(err)
+	}
 
 	gin.SetMode(cfg.Mode)
 
@@ -99,10 +102,12 @@ func main() {
 	}()
 
 	// start app
-	app, err := InitApp(&cfg, &cfg.GRPC)
+	app, cleanup, err := InitApp(&cfg, &cfg.GRPC)
 	if err != nil {
 		panic(err)
 	}
+	defer cleanup()
+
 	if err := app.Run(); err != nil {
 		panic(err)
 	}

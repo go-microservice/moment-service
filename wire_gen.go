@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/go-eagle/eagle/pkg/app"
+	"github.com/go-eagle/eagle/pkg/redis"
 	"github.com/go-microservice/moment-service/internal/cache"
 	"github.com/go-microservice/moment-service/internal/model"
 	"github.com/go-microservice/moment-service/internal/repository"
@@ -20,29 +21,35 @@ import (
 
 // Injectors from wire.go:
 
-func InitApp(cfg *app.Config, config *app.ServerConfig) (*app.App, error) {
+func InitApp(cfg *app.Config, config *app.ServerConfig) (*app.App, func(), error) {
 	db := model.Init()
-	postInfoCache := cache.NewPostInfoCache()
+	client, cleanup, err := redis.Init()
+	if err != nil {
+		return nil, nil, err
+	}
+	postInfoCache := cache.NewPostInfoCache(client)
 	postInfoRepo := repository.NewPostInfo(db, postInfoCache)
 	postLatestRepo := repository.NewPostLatest(db)
 	postHotRepo := repository.NewPostHot(db)
 	userPostRepo := repository.NewUserPost(db)
 	postServiceServer := service.NewPostServiceServer(postInfoRepo, postLatestRepo, postHotRepo, userPostRepo)
-	commentInfoCache := cache.NewCommentInfoCache()
+	commentInfoCache := cache.NewCommentInfoCache(client)
 	commentInfoRepo := repository.NewCommentInfo(db, commentInfoCache)
-	commentContentCache := cache.NewCommentContentCache()
+	commentContentCache := cache.NewCommentContentCache(client)
 	commentContentRepo := repository.NewCommentContent(db, commentContentCache)
-	commentLatestCache := cache.NewCommentLatestCache()
+	commentLatestCache := cache.NewCommentLatestCache(client)
 	commentLatestRepo := repository.NewCommentLatest(db, commentLatestCache)
-	commentHotCache := cache.NewCommentHotCache()
+	commentHotCache := cache.NewCommentHotCache(client)
 	commentHotRepo := repository.NewCommentHot(db, commentHotCache)
-	userCommentCache := cache.NewUserCommentCache()
+	userCommentCache := cache.NewUserCommentCache(client)
 	userCommentRepo := repository.NewUserComment(db, userCommentCache)
 	commentServiceServer := service.NewCommentServiceServer(postInfoRepo, commentInfoRepo, commentContentRepo, commentLatestRepo, commentHotRepo, userCommentRepo)
-	userLikeCache := cache.NewUserLikeCache()
+	userLikeCache := cache.NewUserLikeCache(client)
 	userLikeRepo := repository.NewUserLike(db, userLikeCache)
 	likeServiceServer := service.NewLikeServiceServer(userLikeRepo, postInfoRepo, commentInfoRepo)
 	grpcServer := server.NewGRPCServer(config, postServiceServer, commentServiceServer, likeServiceServer)
 	appApp := newApp(cfg, grpcServer)
-	return appApp, nil
+	return appApp, func() {
+		cleanup()
+	}, nil
 }

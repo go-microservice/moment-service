@@ -10,7 +10,7 @@ import (
 	"github.com/go-eagle/eagle/pkg/cache"
 	"github.com/go-eagle/eagle/pkg/encoding"
 	"github.com/go-eagle/eagle/pkg/log"
-	"github.com/go-eagle/eagle/pkg/redis"
+	redis "github.com/redis/go-redis/v9"
 
 	"github.com/go-microservice/moment-service/internal/model"
 )
@@ -35,11 +35,11 @@ type userCommentCache struct {
 }
 
 // NewUserCommentCache new a cache
-func NewUserCommentCache() UserCommentCache {
+func NewUserCommentCache(rdb *redis.Client) UserCommentCache {
 	jsonEncoding := encoding.JSONEncoding{}
 	cachePrefix := ""
 	return &userCommentCache{
-		cache: cache.NewRedisCache(redis.RedisClient, cachePrefix, jsonEncoding, func() interface{} {
+		cache: cache.NewRedisCache(rdb, cachePrefix, jsonEncoding, func() interface{} {
 			return &model.UserCommentModel{}
 		}),
 	}

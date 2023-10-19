@@ -3,6 +3,7 @@ module github.com/go-microservice/moment-service
 go 1.19
 
 require (
+	github.com/gin-contrib/pprof v1.3.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-eagle/eagle v1.8.0
 	github.com/go-microservice/relation-service v0.0.0-20220615144835-aa0a69fbee93

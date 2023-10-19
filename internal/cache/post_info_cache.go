@@ -10,7 +10,7 @@ import (
 	"github.com/go-eagle/eagle/pkg/cache"
 	"github.com/go-eagle/eagle/pkg/encoding"
 	"github.com/go-eagle/eagle/pkg/log"
-	"github.com/go-eagle/eagle/pkg/redis"
+	redis "github.com/redis/go-redis/v9"
 
 	"github.com/go-microservice/moment-service/internal/model"
 )
@@ -35,11 +35,11 @@ type postInfoCache struct {
 }
 
 // NewPostInfoCache new a cache
-func NewPostInfoCache() PostInfoCache {
+func NewPostInfoCache(rdb *redis.Client) PostInfoCache {
 	jsonEncoding := encoding.JSONEncoding{}
 	cachePrefix := ""
 	return &postInfoCache{
-		cache: cache.NewRedisCache(redis.RedisClient, cachePrefix, jsonEncoding, func() interface{} {
+		cache: cache.NewRedisCache(rdb, cachePrefix, jsonEncoding, func() interface{} {
 			return &model.PostInfoModel{}
 		}),
 	}
@@ -67,7 +67,7 @@ func (c *postInfoCache) SetPostInfoCache(ctx context.Context, id int64, data *mo
 func (c *postInfoCache) GetPostInfoCache(ctx context.Context, id int64) (data *model.PostInfoModel, err error) {
 	cacheKey := c.GetPostInfoCacheKey(id)
 	err = c.cache.Get(ctx, cacheKey, &data)
-	if err != nil && err != redis.ErrRedisNotFound {
+	if err != nil && err != redis.Nil {
 		log.WithContext(ctx).Warnf("get err from redis, err: %+v", err)
 		return nil, err
 	}

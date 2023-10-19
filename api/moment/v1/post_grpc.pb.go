@@ -33,10 +33,15 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PostServiceClient interface {
+	// 创建帖子
 	CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostReply, error)
+	// 更新帖子，暂时不提供
 	UpdatePost(ctx context.Context, in *UpdatePostRequest, opts ...grpc.CallOption) (*UpdatePostReply, error)
+	// 删除帖子
 	DeletePost(ctx context.Context, in *DeletePostRequest, opts ...grpc.CallOption) (*DeletePostReply, error)
+	// 根据id获取指定帖子
 	GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostReply, error)
+	// 批量获取帖子
 	BatchGetPost(ctx context.Context, in *BatchGetPostRequest, opts ...grpc.CallOption) (*BatchGetPostReply, error)
 	// 我发布过的帖子列表
 	ListMyPost(ctx context.Context, in *ListMyPostRequest, opts ...grpc.CallOption) (*ListMyPostReply, error)
@@ -130,10 +135,15 @@ func (c *postServiceClient) ListHotPost(ctx context.Context, in *ListHotPostRequ
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility
 type PostServiceServer interface {
+	// 创建帖子
 	CreatePost(context.Context, *CreatePostRequest) (*CreatePostReply, error)
+	// 更新帖子，暂时不提供
 	UpdatePost(context.Context, *UpdatePostRequest) (*UpdatePostReply, error)
+	// 删除帖子
 	DeletePost(context.Context, *DeletePostRequest) (*DeletePostReply, error)
+	// 根据id获取指定帖子
 	GetPost(context.Context, *GetPostRequest) (*GetPostReply, error)
+	// 批量获取帖子
 	BatchGetPost(context.Context, *BatchGetPostRequest) (*BatchGetPostReply, error)
 	// 我发布过的帖子列表
 	ListMyPost(context.Context, *ListMyPostRequest) (*ListMyPostReply, error)

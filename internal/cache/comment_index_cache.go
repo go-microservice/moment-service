@@ -11,7 +11,6 @@ import (
 
 	"github.com/spf13/cast"
 
-	rdb "github.com/go-eagle/eagle/pkg/redis"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -34,9 +33,9 @@ type commentIndexCache struct {
 }
 
 // NewCommentIndexCache new a cache
-func NewCommentIndexCache() CommentIndexCache {
+func NewCommentIndexCache(rdb *redis.Client) CommentIndexCache {
 	return &commentIndexCache{
-		cache: rdb.RedisClient,
+		cache: rdb,
 	}
 }
 

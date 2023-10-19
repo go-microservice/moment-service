@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/go-eagle/eagle/pkg/log"
-	rdb "github.com/go-eagle/eagle/pkg/redis"
 	redis "github.com/redis/go-redis/v9"
 
 	"github.com/go-microservice/moment-service/internal/model"
@@ -36,9 +35,9 @@ type commentLatestCache struct {
 }
 
 // NewCommentLatestCache new a cache
-func NewCommentLatestCache() CommentLatestCache {
+func NewCommentLatestCache(rdb *redis.Client) CommentLatestCache {
 	return &commentLatestCache{
-		cache: rdb.RedisClient,
+		cache: rdb,
 	}
 }
 

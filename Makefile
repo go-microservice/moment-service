@@ -187,11 +187,11 @@ openapi:
           $(API_PROTO_FILES)
 
 .PHONY: doc
-# generate html or markdown doc
+# generate html or markdown doc for data type
 doc:
 	protoc --proto_path=. \
           --proto_path=./third_party \
-	   	  --doc_out=. \
+	   	  --doc_out=./api \
 	   	  --doc_opt=html,index.html \
 	   	  $(API_PROTO_FILES)
 
