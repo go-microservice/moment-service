@@ -354,7 +354,7 @@ func (s *CommentServiceServer) GetComment(ctx context.Context, req *v1.GetCommen
 	}, nil
 }
 
-func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *v1.BatchGetCommentRequest) (*v1.BatchGetCommentReply, error) {
+func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *v1.BatchGetCommentsRequest) (*v1.BatchGetCommentsReply, error) {
 	if len(req.GetIds()) == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
@@ -427,122 +427,113 @@ func (s *CommentServiceServer) BatchGetComment(ctx context.Context, req *v1.Batc
 		comments = append(comments, comment.(*v1.Comment))
 	}
 
-	return &v1.BatchGetCommentReply{
+	return &v1.BatchGetCommentsReply{
 		Comments: comments,
 	}, nil
 }
 
-func (s *CommentServiceServer) ListHotComment(ctx context.Context, req *v1.ListCommentRequest) (*v1.ListCommentReply, error) {
+func (s *CommentServiceServer) ListHotComment(ctx context.Context, req *v1.ListCommentsRequest) (*v1.ListCommentsReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageToken() == 0 {
+		req.PageToken = math.MaxInt64
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
-	cmtIDs, err := s.cmtHotRepo.ListCommentHot(ctx, req.GetPostId(), req.GetLastId(), int(req.GetLimit())+1)
+	cmtIDs, err := s.cmtHotRepo.ListCommentHot(ctx, req.GetPostId(), req.GetPageToken(), int(req.GetPageSize())+1)
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken int64
 	)
-	if len(cmtIDs) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = cmtIDs[len(cmtIDs)-1]
+	if len(cmtIDs) > int(req.GetPageSize()) {
+		nextPageToken = cmtIDs[len(cmtIDs)-1]
 		cmtIDs = cmtIDs[:len(cmtIDs)-1]
 	}
 
-	items, err := s.BatchGetComment(ctx, &v1.BatchGetCommentRequest{Ids: cmtIDs})
+	items, err := s.BatchGetComment(ctx, &v1.BatchGetCommentsRequest{Ids: cmtIDs})
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
-	return &v1.ListCommentReply{
-		Items:   items.GetComments(),
-		Count:   int64(len(items.GetComments())),
-		HasMore: hasMore,
-		LastId:  lastId,
+	return &v1.ListCommentsReply{
+		Items:         items.GetComments(),
+		Count:         int64(len(items.GetComments())),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *v1.ListCommentRequest) (*v1.ListCommentReply, error) {
+func (s *CommentServiceServer) ListLatestComment(ctx context.Context, req *v1.ListCommentsRequest) (*v1.ListCommentsReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageToken() == 0 {
+		req.PageToken = math.MaxInt64
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
-	cmtIDs, err := s.cmtLatestRepo.ListCommentLatest(ctx, req.GetPostId(), req.GetLastId(), int(req.GetLimit())+1)
+	cmtIDs, err := s.cmtLatestRepo.ListCommentLatest(ctx, req.GetPostId(), req.GetPageToken(), int(req.GetPageSize())+1)
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken int64
 	)
-	if len(cmtIDs) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = cmtIDs[len(cmtIDs)-1]
+	if len(cmtIDs) > int(req.GetPageSize()) {
+		nextPageToken = cmtIDs[len(cmtIDs)-1]
 		cmtIDs = cmtIDs[:len(cmtIDs)-1]
 	}
 
-	cmts, err := s.BatchGetComment(ctx, &v1.BatchGetCommentRequest{Ids: cmtIDs})
+	cmts, err := s.BatchGetComment(ctx, &v1.BatchGetCommentsRequest{Ids: cmtIDs})
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
-	return &v1.ListCommentReply{
-		Items:   cmts.GetComments(),
-		Count:   int64(len(cmts.GetComments())),
-		HasMore: hasMore,
-		LastId:  lastId,
+	return &v1.ListCommentsReply{
+		Items:         cmts.GetComments(),
+		Count:         int64(len(cmts.GetComments())),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (s *CommentServiceServer) ListReplyComment(ctx context.Context, req *v1.ListReplyCommentRequest) (*v1.ListReplyCommentReply, error) {
+func (s *CommentServiceServer) ListReplyComment(ctx context.Context, req *v1.ListReplyCommentsRequest) (*v1.ListReplyCommentsReply, error) {
 	if req.GetCommentId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageToken() == 0 {
+		req.PageToken = math.MaxInt64
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
-	cmtIDs, err := s.cmtLatestRepo.ListReplyComment(ctx, req.GetCommentId(), req.GetLastId(), int(req.GetLimit())+1)
+	cmtIDs, err := s.cmtLatestRepo.ListReplyComment(ctx, req.GetCommentId(), req.GetPageToken(), int(req.GetPageSize())+1)
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken int64
 	)
-	if len(cmtIDs) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = cmtIDs[len(cmtIDs)-1]
+	if len(cmtIDs) > int(req.GetPageSize()) {
+		nextPageToken = cmtIDs[len(cmtIDs)-1]
 		cmtIDs = cmtIDs[:len(cmtIDs)-1]
 	}
 
-	cmts, err := s.BatchGetComment(ctx, &v1.BatchGetCommentRequest{Ids: cmtIDs})
+	cmts, err := s.BatchGetComment(ctx, &v1.BatchGetCommentsRequest{Ids: cmtIDs})
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
-	return &v1.ListReplyCommentReply{
-		Items:   cmts.GetComments(),
-		Count:   int64(len(cmts.GetComments())),
-		HasMore: hasMore,
-		LastId:  lastId,
+	return &v1.ListReplyCommentsReply{
+		Items:         cmts.GetComments(),
+		Count:         int64(len(cmts.GetComments())),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 

@@ -17,27 +17,31 @@ service PostService {
 	// 根据id获取指定帖子
 	rpc GetPost (GetPostRequest) returns (GetPostReply);
 	// 批量获取帖子
-	rpc BatchGetPost (BatchGetPostRequest) returns (BatchGetPostReply);
+	rpc BatchGetPosts (BatchGetPostsRequest) returns (BatchGetPostsReply);
 	// 我发布过的帖子列表
-	rpc ListMyPost (ListMyPostRequest) returns (ListMyPostReply);
+	rpc ListMyPost (ListMyPostsRequest) returns (ListMyPostsReply);
 	// 最新的帖子列表
-	rpc ListLatestPost (ListLatestPostRequest) returns (ListLatestPostReply);
+	rpc ListLatestPost (ListLatestPostsRequest) returns (ListLatestPostsReply);
 	// 热门的帖子列表
-	rpc ListHotPost (ListHotPostRequest) returns (ListHotPostReply);
+	rpc ListHotPost (ListHotPostsRequest) returns (ListHotPostsReply);
 }
 
+// 帖子信息
 message Post {
+	// 删除标记
 	enum DEL_FLAG {
 		DEL_FLAG_UNSPECIFIED = 0;
 		DEL_FLAG_NORMAL = 1;  // normal status
 		DEL_FLAG_USER = 2;  // user self delete
 		DEL_FLAG_ADMIN = 3; // admin delete
 	}
+	// 帖子的可见性
 	enum VISIBLE {
 		VISIBLE_UNSPECIFIED = 0;
 		VISIBLE_ALL = 1;  // everyone can see
 		VISIBLE_SELF = 2; // only self see
 	}
+	// 帖子id
 	int64 id = 1;
 	int32 post_type = 2; // post type
 	int64 user_id = 3; // user id
@@ -47,15 +51,15 @@ message Post {
 	int64 like_count = 7; // like count
 	int64 comment_count = 8; // comment count
 	int64 collect_count = 9; // collect count
-	int64 share_count = 10;
-	DEL_FLAG del_flag = 11;
-	VISIBLE visible = 12;
-	float longitude = 13;
-	float latitude = 14;
-	string position = 15;
-	int64 created_at = 16;
-	int64 updated_at = 17;
-	int64 deleted_at = 18;
+	int64 share_count = 10; // 分享数
+	DEL_FLAG del_flag = 11; // 删除标记
+	VISIBLE visible = 12; // 帖子可见性
+	float longitude = 13; // 经度
+	float latitude = 14; // 纬度
+	string position = 15; // 发帖人的位置，比如北京
+	int64 created_at = 16; // 创建时间
+	int64 updated_at = 17; // 更新时间
+	int64 deleted_at = 18; // 删除时间
 }
 
 // 帖子内容结构
@@ -67,90 +71,142 @@ message Content {
 
 // 图片内容
 message PostImage {
-	string image_key = 1;
-	string image_url = 2;
-	string image_type = 3;
-	int32 width = 4;
-	int32 height = 5;
+	string image_key = 1; // 图片key
+	string image_url = 2; // 图片url
+	string image_type = 3; // 图片类型
+	int32 width = 4; // 图片宽度
+	int32 height = 5; // 图片高度
 }
 
 // 视频内容
 message Video {
-	string video_key = 1;
-	string video_url = 2;
-	string cover_key = 3;
-	string cover_url = 4;
-	float duration = 5;
-	int32 width = 6;
-	int32 height = 7;
+	string video_key = 1; // 视频key
+	string video_url = 2; // 视频完成url
+	string cover_key = 3; // 视频封面key
+	string cover_url = 4; // 视频封面url
+	float duration = 5; // 视频长度
+	int32 width = 6; // 视频封面宽
+	int32 height = 7; // 视频封面高
 }
 
+// 发布帖子
 message CreatePostRequest {
+	// 用户uid
 	int64 user_id = 1;
+	// 帖子标题
 	string title = 2;
+	// 帖子内容
 	string text = 3;
+	// 帖子图片，多个传入数组，
 	// json格式：[{"image_key":"/abc/a.jpg","image_type":"jpg","width":200,"height":200}]
 	repeated PostImage images = 4;
+	// 视频信息
 	Video video = 5;
+	// 发帖人位置
 	string position = 6;
+	// 发帖时的经度
 	float longitude = 7;
+	// 发帖时的纬度
 	float latitude = 8;
 }
 
+// 发布帖子返回结构
 message CreatePostReply {
+	// 返回帖子信息
 	Post post = 1;
 }
 
+// 更新帖子请求，暂时不提供
 message UpdatePostRequest {
 }
+
+// 更新帖子响应，暂时不提供
 message UpdatePostReply {}
 
+// 删除帖子
 message DeletePostRequest {
+	// 帖子id
 	int64 id = 1;
+	// 删除人的uid
 	int64 user_id = 2;
+	// 删除标记
 	int32 del_flag = 3;
 }
+
+// 删除帖子响应
 message DeletePostReply {
 }
 
+// 获取帖子请求
 message GetPostRequest {
+	// 帖子id
 	int64 id = 1;
 }
+
+// 获取帖子响应
 message GetPostReply {
+	// 帖子信息
 	Post post = 1;
 }
 
-message BatchGetPostRequest {
+// 批量获取帖子
+message BatchGetPostsRequest {
+	// 帖子id, 多个用逗号分隔
 	repeated int64 ids = 1;
 }
-message BatchGetPostReply {
+
+// 返回帖子信息
+message BatchGetPostsReply {
+	// 多个帖子信息
 	repeated Post posts = 1;
 }
 
-message ListMyPostRequest {
+// 获取我发布过的帖子请求
+message ListMyPostsRequest {
+	// 用户uid
 	int64 user_id = 1;
+	// 每页大小
 	int32 page_size = 2;
-	string page_token = 3;
-}
-message ListMyPostReply {
-	repeated Post posts = 1;
-	string next_page_token = 2;
+	// 分页token
+	int64 page_token = 3;
 }
 
-message ListLatestPostRequest {
-	int32 page_size = 1;
-	string page_token = 2;
-}
-message ListLatestPostReply {
+// 获取我发布过的帖子响应
+message ListMyPostsReply {
+	// 多个帖子信息
 	repeated Post posts = 1;
-	string next_page_token = 2;
+	// 下一次请求用到的token, 如果为空说明没有下一页
+	int64 next_page_token = 2;
 }
 
-message ListHotPostRequest {
+// 获取最新的帖子列表请求
+message ListLatestPostsRequest {
+	// 每页大小
 	int32 page_size = 1;
-	string page_token = 2;
+	// 分页token
+	int64 page_token = 2;
 }
-message ListHotPostReply {
+
+// 获取最新的帖子列表响应
+message ListLatestPostsReply {
+	// 多个帖子信息
 	repeated Post posts = 1;
-	string next_page_token = 2;
+	// 下一次请求用到的token, 如果为空说明没有下一页
+	int64 next_page_token = 2;
+}
+
+// 获取热门帖子列表请求
+message ListHotPostsRequest {
+	// 每页大小
+	int32 page_size = 1;
+	// 分页token
+	int64 page_token = 2;
+}
+
+// 获取热门帖子列表响应
+message ListHotPostsReply {
+	// 多个帖子信息
+	repeated Post posts = 1;
+	// 下一次请求用到的token, 如果为空说明没有下一页
+	int64 next_page_token = 2;
 }

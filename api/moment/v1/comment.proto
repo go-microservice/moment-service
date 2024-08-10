@@ -7,18 +7,24 @@ option java_multiple_files = true;
 option java_package = "api.moment.v1";
 
 service CommentService {
+	// 发布评论
 	rpc CreateComment (CreateCommentRequest) returns (CreateCommentReply);
+	// 更新评论
 	rpc UpdateComment (UpdateCommentRequest) returns (UpdateCommentReply);
+	// 删除评论
 	rpc DeleteComment (DeleteCommentRequest) returns (DeleteCommentReply);
+	// 回复评论
 	rpc ReplyComment (ReplyCommentRequest) returns (ReplyCommentReply);
+	// 获取评论
 	rpc GetComment (GetCommentRequest) returns (GetCommentReply);
-	rpc BatchGetComment(BatchGetCommentRequest) returns (BatchGetCommentReply);
+	// 批量获取评论
+	rpc BatchGetComments(BatchGetCommentsRequest) returns (BatchGetCommentsReply);
 	// 热门评论列表
-	rpc ListHotComment (ListCommentRequest) returns (ListCommentReply);
+	rpc ListHotComments (ListCommentsRequest) returns (ListCommentsReply);
 	// 最新评论列表
-	rpc ListLatestComment (ListCommentRequest) returns (ListCommentReply);
+	rpc ListLatestComments (ListCommentsRequest) returns (ListCommentsReply);
 	// 评论回复列表
-	rpc ListReplyComment (ListReplyCommentRequest) returns (ListReplyCommentReply);
+	rpc ListReplyComments (ListReplyCommentsRequest) returns (ListReplyCommentsReply);
 }
 
 message Comment {
@@ -81,33 +87,44 @@ message GetCommentReply {
 	Comment comment = 1;
 }
 
-message BatchGetCommentRequest {
+message BatchGetCommentsRequest {
 	repeated int64 ids = 1;
 }
-message BatchGetCommentReply {
+message BatchGetCommentsReply {
 	repeated Comment comments = 1;
 }
 
-message ListCommentRequest {
+// 评论列表请求参数
+message ListCommentsRequest {
+	// 帖子id
 	int64 post_id = 1;
-	int64 last_id = 2;
-	int32 limit = 3;
-}
-message ListCommentReply {
-	repeated Comment items = 1;
-	int64 count = 2;
-	bool has_more = 3;
-	int64 last_id = 4;
+	// 每页数量
+	int32 page_size = 2;
+	// 分页token
+	int64 page_token = 3;
 }
 
-message ListReplyCommentRequest {
-	int64 comment_id = 1;
-	int64 last_id = 2;
-	int32 limit = 3;
-}
-message ListReplyCommentReply {
+// 评论列表响应
+message ListCommentsReply {
 	repeated Comment items = 1;
 	int64 count = 2;
-	bool has_more = 3;
-	int64 last_id = 4;
+	// 下一次请求用到的token, 如果为空说明没有下一页
+	int64 next_page_token = 3;
+}
+
+// 评论的回复列表请求参数
+message ListReplyCommentsRequest {
+	int64 comment_id = 1;
+	// 每页数量
+	int32 page_size = 2;
+	// 分页token
+	int64 page_token = 3;
+}
+
+// 评论的回复列表响应
+message ListReplyCommentsReply {
+	repeated Comment items = 1;
+	int64 count = 2;
+	// 下一次请求用到的token, 如果为空说明没有下一页
+	int64 next_page_token = 3;
 }
