@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-eagle/eagle/pkg/errcode"
 	"github.com/go-eagle/eagle/pkg/log"
+	"github.com/go-eagle/eagle/pkg/utils"
 	"github.com/jinzhu/copier"
 	"github.com/pkg/errors"
 	"github.com/spf13/cast"
@@ -349,16 +350,18 @@ func (s *PostServiceServer) BatchGetPosts(ctx context.Context, req *v1.BatchGetP
 	finished := make(chan bool, 1)
 
 	go func() {
-		select {
-		case <-finished:
-			return
-		case err := <-errChan:
-			if err != nil {
-				// NOTE: if need, record log to file
+		for {
+			select {
+			case <-finished:
+				return
+			case err := <-errChan:
+				if err != nil {
+					// NOTE: if need, record log to file
+				}
+			case <-time.After(3 * time.Second):
+				log.Warn(fmt.Errorf("list users timeout after 3 seconds"))
+				return
 			}
-		case <-time.After(3 * time.Second):
-			log.Warn(fmt.Errorf("list users timeout after 3 seconds"))
-			return
 		}
 	}()
 
@@ -367,6 +370,11 @@ func (s *PostServiceServer) BatchGetPosts(ctx context.Context, req *v1.BatchGetP
 		go func(info model.PostInfoModel) {
 			defer func() {
 				wg.Done()
+				// catch error and avoid goroutine leak
+				if r := recover(); r != nil {
+					debugStr := utils.PrintStackTrace("BatchGetPosts: panic recovered", r)
+					errChan <- fmt.Errorf("error: %s", debugStr)
+				}
 			}()
 
 			mu.Lock()
@@ -374,7 +382,7 @@ func (s *PostServiceServer) BatchGetPosts(ctx context.Context, req *v1.BatchGetP
 
 			pbPost, err := convertPost(info)
 			if err != nil {
-				return
+				errChan <- err
 			}
 
 			m.Store(info.ID, pbPost)
