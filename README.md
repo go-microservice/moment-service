@@ -1,6 +1,5 @@
 # moment-service
 
-
 ## Features
 
 - post
@@ -18,16 +17,25 @@ The application with the following layers:
 ## Run
 
 ```bash
-go build
-./moment-service -c=config
+# 运行
+make run
 ```
 
 ## Develop
 
-### gen proto
+如果中间有修改 proto 文件，需要重新生成 `*.pb.go` 和 `*_grpc.pb.go`
 
 ```bash
+# 生成 *.pb.go
+make proto
+
+# 生成 *_grpc.pb.go
 make grpc
+
+# 生成文档 在 api/index.html 可以直接浏览器查看
+make doc
+
+make run
 ```
 
 ## Reference

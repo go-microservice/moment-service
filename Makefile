@@ -31,13 +31,23 @@ all: lint test build
 
 .PHONY: build
 # make build, Build the binary file
-build: dep
-	@go build -v -ldflags ${ldflags} .
+build: 
+	GOOS=linux GOARCH=amd64 go build -v -ldflags ${ldflags} -o build/$(SERVICE_NAME) cmd/server/main.go cmd/server/wire_gen.go
+
+.PHONY: run
+# make run, run current project
+run: wire
+	go run cmd/server/main.go cmd/server/wire_gen.go
+
+.PHONY: wire
+# make wire, generate wire_gen.go
+wire: 
+	cd cmd/server && wire
 
 .PHONY: dep
 # make dep Get the dependencies
 dep:
-	@go mod download
+	go mod tidy
 
 .PHONY: fmt
 # make fmt
@@ -101,20 +111,6 @@ clean:
 	@go mod tidy
 	@echo "clean finished"
 
-.PHONY: docs
-# gen swagger doc
-docs:
-	@if ! which swag &>/dev/null; then \
-  		echo "downloading swag"; \
-  		go get -u github.com/swaggo/swag/cmd/swag; \
-  	fi
-	@swag init
-	@mv docs/docs.go api/http
-	@mv docs/swagger.json api/http
-	@mv docs/swagger.yaml api/http
-	@echo "gen-docs done"
-	@echo "see docs by: http://localhost:8080/swagger/index.html"
-
 .PHONY: graph
 # make graph 生成交互式的可视化Go程序调用图(会在浏览器自动打开)
 graph:
@@ -140,7 +136,7 @@ mockgen:
 # init env
 init:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 	go install github.com/google/gnostic@latest
 	go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
 	go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
@@ -194,6 +190,20 @@ doc:
 	   	  --doc_out=./api \
 	   	  --doc_opt=html,index.html \
 	   	  $(API_PROTO_FILES)
+
+.PHONY: docs
+# gen swagger doc
+docs:
+	@if ! which swag &>/dev/null; then \
+  		echo "downloading swag"; \
+  		go get -u github.com/swaggo/swag/cmd/swag; \
+  	fi
+	@swag init
+	@mv docs/docs.go api/http
+	@mv docs/swagger.json api/http
+	@mv docs/swagger.yaml api/http
+	@echo "gen-docs done"
+	@echo "see docs by: http://localhost:8080/swagger/index.html"
 
 # show help
 help:

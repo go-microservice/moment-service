@@ -7,15 +7,23 @@ option java_multiple_files = true;
 option java_package = "api.moment.v1";
 
 service LikeService {
+	// 创建点赞
 	rpc CreateLike (CreateLikeRequest) returns (CreateLikeReply);
+	// 更新点赞
 	rpc UpdateLike (UpdateLikeRequest) returns (UpdateLikeReply);
+	// 删除点赞
 	rpc DeleteLike (DeleteLikeRequest) returns (DeleteLikeReply);
+	// 获得点赞
 	rpc GetLike (GetLikeRequest) returns (GetLikeReply);
-	rpc BatchGetLike (BatchGetLikeRequest) returns (BatchGetLikeReply);
-	rpc ListPostLike (ListPostLikeRequest) returns (ListLikeReply);
-	rpc ListCommentLike (ListCommentLikeRequest) returns (ListLikeReply);
+	// 批量获取点赞
+	rpc BatchGetLikes (BatchGetLikesRequest) returns (BatchGetLikesReply);
+	// 帖子点赞列表
+	rpc ListPostLikes (ListPostLikesRequest) returns (ListPostLikesReply);
+	// 评论点赞列表
+	rpc ListCommentsLike (ListCommentLikesRequest) returns (ListCommentLikesReply);
 }
 
+// 点赞信息
 message Like {
 	int64 id = 1;
 	int64 user_id = 2;
@@ -26,6 +34,7 @@ message Like {
 	int64 updated_at = 7;
 }
 
+// 创建点赞请求
 message CreateLikeRequest {
 	int64 user_id = 1;
 	int32 obj_type = 2;
@@ -54,31 +63,53 @@ message GetLikeReply {
 		Like like = 1;
 }
 
-message BatchGetLikeRequest {
+// 批量获取点赞请求参数
+message BatchGetLikesRequest {
 	int64 user_id = 1;
 	int32 obj_type = 2;
 	repeated int64 obj_ids = 3;
 }
 
-message BatchGetLikeReply {
+// 批量获取点赞响应
+message BatchGetLikesReply {
+	// 返回的data, map 结构
 	map<int64, int32> data = 1;
 }
 
-message ListPostLikeRequest {
+// 帖子点赞列表请求参数
+message ListPostLikesRequest {
+	// 用户id
 	int64 user_id = 1;
+	// 帖子id
 	int64 post_id = 2;
-	int64 last_id = 3;
-	int32 limit = 4;
+	// 每页数量
+	int32 page_size = 3;
+	// 分页token
+	int64 page_token = 4;
 }
-message ListCommentLikeRequest {
-	int64 user_id = 1;
-	int64 comment_id = 2;
-	int64 last_id = 3;
-	int32 limit = 4;
-}
-message ListLikeReply {
+
+// 帖子点赞列表响应
+message ListPostLikesReply {
 	repeated Like items = 1;
 	int64 count = 2;
-	bool has_more = 3;
-	int64 last_id = 4;
+	// 下一次请求用到的token, 如果为空说明没有下一页
+	int64 next_page_token = 3;
+}
+
+// 评论点赞列表请求参数
+message ListCommentLikesRequest {
+	int64 user_id = 1;
+	int64 comment_id = 2;
+	// 每页数量
+	int32 page_size = 3;
+	// 分页token
+	int64 page_token = 4;
+}
+
+// 评论点赞列表响应
+message ListCommentLikesReply {
+	repeated Like items = 1;
+	int64 count = 2;
+	// 下一次请求用到的token, 如果为空说明没有下一页
+	int64 next_page_token = 3;
 }

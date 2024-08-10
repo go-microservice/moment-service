@@ -326,7 +326,7 @@ func (s *PostServiceServer) GetPost(ctx context.Context, req *v1.GetPostRequest)
 	}, nil
 }
 
-func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *v1.BatchGetPostRequest) (*v1.BatchGetPostReply, error) {
+func (s *PostServiceServer) BatchGetPosts(ctx context.Context, req *v1.BatchGetPostsRequest) (*v1.BatchGetPostsReply, error) {
 	if len(req.GetIds()) == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails(errcode.NewDetails(map[string]interface{}{
 			"msg": errors.New("post_ids is empty"),
@@ -394,14 +394,14 @@ func (s *PostServiceServer) BatchGetPost(ctx context.Context, req *v1.BatchGetPo
 		}
 	}
 
-	return &v1.BatchGetPostReply{
+	return &v1.BatchGetPostsReply{
 		Posts: pbPosts,
 	}, nil
 }
 
-func (s *PostServiceServer) ListMyPost(ctx context.Context, req *v1.ListMyPostRequest) (*v1.ListMyPostReply, error) {
-	if req.GetPageToken() == "" {
-		req.PageToken = cast.ToString(math.MaxInt64)
+func (s *PostServiceServer) ListMyPosts(ctx context.Context, req *v1.ListMyPostsRequest) (*v1.ListMyPostsReply, error) {
+	if req.GetPageToken() == 0 {
+		req.PageToken = math.MaxInt64
 	}
 	if req.GetPageSize() == 0 {
 		req.PageSize = 10
@@ -414,10 +414,10 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *v1.ListMyPostRe
 	}
 
 	var (
-		nextPageToken string
+		nextPageToken int64
 	)
 	if len(userPosts) > int(req.GetPageSize()) {
-		nextPageToken = cast.ToString(userPosts[len(userPosts)-1].ID)
+		nextPageToken = userPosts[len(userPosts)-1].ID
 		userPosts = userPosts[:len(userPosts)-1]
 	}
 
@@ -426,20 +426,20 @@ func (s *PostServiceServer) ListMyPost(ctx context.Context, req *v1.ListMyPostRe
 	for _, userPost := range userPosts {
 		postIds = append(postIds, userPost.PostID)
 	}
-	posts, err := s.BatchGetPost(ctx, &v1.BatchGetPostRequest{Ids: postIds})
+	posts, err := s.BatchGetPosts(ctx, &v1.BatchGetPostsRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	return &v1.ListMyPostReply{
+	return &v1.ListMyPostsReply{
 		Posts:         posts.GetPosts(),
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *v1.ListLatestPostRequest) (*v1.ListLatestPostReply, error) {
-	if req.GetPageToken() == "" {
-		req.PageToken = cast.ToString(math.MaxInt64)
+func (s *PostServiceServer) ListLatestPosts(ctx context.Context, req *v1.ListLatestPostsRequest) (*v1.ListLatestPostsReply, error) {
+	if req.GetPageToken() == 0 {
+		req.PageToken = math.MaxInt64
 	}
 	if req.GetPageSize() == 0 {
 		req.PageSize = 10
@@ -452,10 +452,10 @@ func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *v1.ListLate
 	}
 
 	var (
-		nextPageToken string
+		nextPageToken int64
 	)
 	if len(latestPosts) > int(req.GetPageSize()) {
-		nextPageToken = cast.ToString(latestPosts[len(latestPosts)-1].PostID)
+		nextPageToken = latestPosts[len(latestPosts)-1].PostID
 		latestPosts = latestPosts[:len(latestPosts)-1]
 	}
 
@@ -464,20 +464,20 @@ func (s *PostServiceServer) ListLatestPost(ctx context.Context, req *v1.ListLate
 	for _, latestPost := range latestPosts {
 		postIds = append(postIds, latestPost.PostID)
 	}
-	posts, err := s.BatchGetPost(ctx, &v1.BatchGetPostRequest{Ids: postIds})
+	posts, err := s.BatchGetPosts(ctx, &v1.BatchGetPostsRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	return &v1.ListLatestPostReply{
+	return &v1.ListLatestPostsReply{
 		Posts:         posts.GetPosts(),
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (s *PostServiceServer) ListHotPost(ctx context.Context, req *v1.ListHotPostRequest) (*v1.ListHotPostReply, error) {
-	if req.GetPageToken() == "" {
-		req.PageToken = cast.ToString(math.MaxInt64)
+func (s *PostServiceServer) ListHotPosts(ctx context.Context, req *v1.ListHotPostsRequest) (*v1.ListHotPostsReply, error) {
+	if req.GetPageToken() == 0 {
+		req.PageToken = math.MaxInt64
 	}
 	if req.GetPageSize() == 0 {
 		req.PageSize = 10
@@ -490,10 +490,10 @@ func (s *PostServiceServer) ListHotPost(ctx context.Context, req *v1.ListHotPost
 	}
 
 	var (
-		nextPageToken string
+		nextPageToken int64
 	)
 	if len(hotPosts) > int(req.GetPageSize()) {
-		nextPageToken = cast.ToString(hotPosts[len(hotPosts)-1].PostID)
+		nextPageToken = hotPosts[len(hotPosts)-1].PostID
 		hotPosts = hotPosts[:len(hotPosts)-1]
 	}
 
@@ -502,12 +502,12 @@ func (s *PostServiceServer) ListHotPost(ctx context.Context, req *v1.ListHotPost
 	for _, hotPost := range hotPosts {
 		postIds = append(postIds, hotPost.PostID)
 	}
-	posts, err := s.BatchGetPost(ctx, &v1.BatchGetPostRequest{Ids: postIds})
+	posts, err := s.BatchGetPosts(ctx, &v1.BatchGetPostsRequest{Ids: postIds})
 	if err != nil {
 		return nil, err
 	}
 
-	return &v1.ListHotPostReply{
+	return &v1.ListHotPostsReply{
 		Posts:         posts.GetPosts(),
 		NextPageToken: nextPageToken,
 	}, nil

@@ -235,7 +235,7 @@ func (s *LikeServiceServer) GetLike(ctx context.Context, req *v1.GetLikeRequest)
 	}, nil
 }
 
-func (s *LikeServiceServer) BatchGetLike(ctx context.Context, req *v1.BatchGetLikeRequest) (*v1.BatchGetLikeReply, error) {
+func (s *LikeServiceServer) BatchGetLikes(ctx context.Context, req *v1.BatchGetLikesRequest) (*v1.BatchGetLikesReply, error) {
 	userLikes, err := s.likeRepo.BatchGetUserLike(ctx, req.GetUserId(), req.GetObjType(), req.GetObjIds())
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
@@ -251,33 +251,31 @@ func (s *LikeServiceServer) BatchGetLike(ctx context.Context, req *v1.BatchGetLi
 		data[v.ObjId] = v.Status
 	}
 
-	return &v1.BatchGetLikeReply{
+	return &v1.BatchGetLikesReply{
 		Data: data,
 	}, nil
 }
 
-func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *v1.ListPostLikeRequest) (*v1.ListLikeReply, error) {
+func (s *LikeServiceServer) ListPostLikes(ctx context.Context, req *v1.ListPostLikesRequest) (*v1.ListPostLikesReply, error) {
 	if req.GetPostId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageToken() == 0 {
+		req.PageToken = math.MaxInt64
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
-	likes, err := s.likeRepo.ListUserLikeByObj(ctx, int32(LikeTypePost), req.GetPostId(), req.GetLastId(), req.GetLimit()+1)
+	likes, err := s.likeRepo.ListUserLikeByObj(ctx, int32(LikeTypePost), req.GetPostId(), req.GetPageToken(), req.GetPageSize()+1)
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken int64
 	)
-	if len(likes) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = likes[len(likes)-1].ID
+	if len(likes) > int(req.GetPageSize()) {
+		nextPageToken = likes[len(likes)-1].ID
 		likes = likes[:len(likes)-1]
 	}
 
@@ -290,36 +288,30 @@ func (s *LikeServiceServer) ListPostLike(ctx context.Context, req *v1.ListPostLi
 		items = append(items, v)
 	}
 
-	return &v1.ListLikeReply{
-		Items:   items,
-		Count:   int64(len(likes)),
-		HasMore: hasMore,
-		LastId:  lastId,
+	return &v1.ListPostLikesReply{
+		Items:         items,
+		Count:         int64(len(likes)),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 
-func (s *LikeServiceServer) ListCommentLike(ctx context.Context, req *v1.ListCommentLikeRequest) (*v1.ListLikeReply, error) {
+func (s *LikeServiceServer) ListCommentLikes(ctx context.Context, req *v1.ListCommentLikesRequest) (*v1.ListCommentLikesReply, error) {
 	if req.GetCommentId() == 0 {
 		return nil, ecode.ErrInvalidArgument.WithDetails().Status(req).Err()
 	}
-	if req.GetLastId() == 0 {
-		req.LastId = math.MaxInt64
+	if req.GetPageSize() == 0 {
+		req.PageSize = 10
 	}
-	if req.GetLimit() == 0 {
-		req.Limit = 10
-	}
-	likes, err := s.likeRepo.ListUserLikeByObj(ctx, int32(LikeTypeComment), req.GetCommentId(), req.GetLastId(), req.GetLimit()+1)
+	likes, err := s.likeRepo.ListUserLikeByObj(ctx, int32(LikeTypeComment), req.GetCommentId(), req.GetPageToken(), req.GetPageSize()+1)
 	if err != nil {
 		return nil, ecode.ErrInternalError.WithDetails().Status(req).Err()
 	}
 
 	var (
-		hasMore bool
-		lastId  int64
+		nextPageToken int64
 	)
-	if len(likes) > int(req.GetLimit()) {
-		hasMore = true
-		lastId = likes[len(likes)-1].ID
+	if len(likes) > int(req.GetPageSize()) {
+		nextPageToken = likes[len(likes)-1].ID
 		likes = likes[:len(likes)-1]
 	}
 
@@ -332,11 +324,10 @@ func (s *LikeServiceServer) ListCommentLike(ctx context.Context, req *v1.ListCom
 		items = append(items, v)
 	}
 
-	return &v1.ListLikeReply{
-		Items:   items,
-		Count:   int64(len(likes)),
-		HasMore: hasMore,
-		LastId:  lastId,
+	return &v1.ListCommentLikesReply{
+		Items:         items,
+		Count:         int64(len(likes)),
+		NextPageToken: nextPageToken,
 	}, nil
 }
 
