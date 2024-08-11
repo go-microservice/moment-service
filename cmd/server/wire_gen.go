@@ -28,7 +28,10 @@ import (
 // Injectors from wire.go:
 
 func InitApp(cfg *app.Config, config *app.ServerConfig) (*app.App, func(), error) {
-	db, cleanup := model.Init()
+	db, cleanup, err := model.Init()
+	if err != nil {
+		return nil, nil, err
+	}
 	client, cleanup2, err := redis.Init()
 	if err != nil {
 		cleanup()
