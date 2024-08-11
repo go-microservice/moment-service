@@ -2,7 +2,7 @@ SHELL := /bin/bash
 BASEDIR = $(shell pwd)
 
 # make GIT_TAG=v1.0.0 build
-SERVICE_NAME?=relation-service
+SERVICE_NAME?=moment-service
 
 # build with version infos
 versionDir = "github.com/go-eagle/eagle/pkg/version"
