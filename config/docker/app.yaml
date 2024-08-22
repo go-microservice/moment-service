@@ -9,14 +9,14 @@ SSL: true
 CtxDefaultTimeout: 12
 CSRF: true
 Debug: false
-EnableTrace: false
+EnableTrace: true
 EnablePprof: true
 
 HTTP:
-  Addr: :8080
+  Addr: :8082
   ReadTimeout: 3s
   WriteTimeout: 3s
 GRPC:
-  Addr: :9090
+  Addr: :9092
   ReadTimeout: 5s
   WriteTimeout: 5s

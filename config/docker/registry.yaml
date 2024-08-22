@@ -20,4 +20,4 @@ nacos:
   TimeoutMs: 5000
   LogDir:
   CacheDir:
-  LogLevel: warn  # debug,info,warn,error, default is info
+  LogLevel: warn # debug,info,warn,error, default is info
