@@ -33,7 +33,6 @@ COPY . .
 COPY config ./config
 
 # Build the Go app
-#RUN make build
 RUN make build
 
 # Runtime stage
